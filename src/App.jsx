@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SUPABASE_ENABLED, loadAllPortals, savePortalContent } from './lib/dataSource';
+import AdminPanel, { checkIsAdmin } from './components/AdminPanel';
+import { supabase } from './lib/supabase.js';
 
 /* ===== ICONS (inline lucide-style SVGs) ===== */
 const ico = (paths) => ({ size = 16, style = {}, ...rest }) => (
@@ -634,7 +636,7 @@ const FilterTabs = ({ value, onChange, options }) => (
 );
 
 /* ===== SIDEBAR ===== */
-const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUser, onSearch, org={}, availablePortals=[], activePortal, onSwitchPortal, onLogout }) => {
+const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUser, onSearch, org={}, availablePortals=[], activePortal, onSwitchPortal, onLogout, showAdmin }) => {
   const me = members.find(m => m.id === currentUserId);
   const sections = [
     { label: null, items: [
@@ -661,6 +663,9 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       { key:'documents',   label:'Dokumenter',   icon:Folder,     count:counts.documents },
       { key:'team',        label:org.navTeam || 'Ledergruppen', icon:Users, count:counts.team },
     ]},
+    ...(showAdmin ? [{ label: 'System', items: [
+      { key:'admin', label:'Admin', icon:ShieldAlert },
+    ]}] : []),
   ];
   const canSwitch = availablePortals.length > 1;
   return (
@@ -5631,6 +5636,7 @@ const App = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [userPickerOpen, setUserPickerOpen] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
   // Last inn data fra Supabase når backend er konfigurert (ellers brukes lokale seed-data)
   useEffect(() => {
@@ -5638,6 +5644,7 @@ const App = () => {
     loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt() })
       .then(all => { setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); })
       .catch(err => console.error('Supabase: lasting feilet', err));
+    checkIsAdmin().then(setIsAdminUser);
   }, []);
 
   const loggedIn = !!currentUserId && !!activePortal;
@@ -5742,7 +5749,8 @@ const App = () => {
         availablePortals={availablePortals}
         activePortal={activePortal}
         onSwitchPortal={handleSwitchPortal}
-        onLogout={handleLogout}/>
+        onLogout={handleLogout}
+        showAdmin={isAdminUser}/>
       <main style={{flex:1,padding:'40px 48px 80px',minWidth:0,maxWidth:1280,position:'relative'}}>
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate}/>}
@@ -5758,6 +5766,7 @@ const App = () => {
         {view==='messages'    && <MessagesView      data={data} save={save} currentUserId={currentUserId} focusChannelId={focusChannelId} onClearFocus={()=>setFocusChannelId(null)}/>}
         {view==='documents'   && <DocumentsView     data={data} save={save}/>}
         {view==='team'        && <TeamView          data={data} save={save}/>}
+        {view==='admin'       && <AdminPanel/>}
       </main>
 
       {/* Flytende AI-knapp – alltid synlig */}
