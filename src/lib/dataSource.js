@@ -33,6 +33,9 @@ export async function savePortalContent(portalId, content) {
   if (!SUPABASE_ENABLED) return;
   const { error } = await supabase
     .from('portal_state')
-    .upsert({ portal_id: portalId, content, updated_at: new Date().toISOString() });
+    .upsert(
+      { portal_id: portalId, content, updated_at: new Date().toISOString() },
+      { onConflict: 'portal_id' }
+    );
   if (error) throw error;
 }
