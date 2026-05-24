@@ -11,8 +11,8 @@ import { supabase, SUPABASE_ENABLED } from './supabase.js';
 */
 
 const C = {
-  navy: '#1A2433', brass: '#B8893B', bg: '#FBF7EF', ink: '#1A2433',
-  inkSoft: '#5A6675', border: '#E6DCC8', surface: '#FFFFFF',
+  navy: '#252525', brass: '#9D8068', bg: '#EDE9DF', ink: '#252525',
+  inkSoft: '#5A5A5A', border: '#CBC4AF', surface: '#FFFFFF',
 };
 
 function SignIn() {

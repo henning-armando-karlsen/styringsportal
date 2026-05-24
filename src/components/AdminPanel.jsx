@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase.js';
 
 const C = {
-  navy: '#1A2433', brass: '#B8893B', bg: '#FBF7EF', ink: '#1A2433',
-  inkSoft: '#5A6675', border: '#E6DCC8', surface: '#FFFFFF',
-  green: '#3D7B4F', greenBg: '#E5EEE3', red: '#9B4836', redBg: '#F3E0D8',
-  amberBg: '#F4E9D2', amber: '#9B7230',
+  navy: '#252525', brass: '#9D8068', bg: '#EDE9DF', ink: '#252525',
+  inkSoft: '#5A5A5A', border: '#CBC4AF', surface: '#FFFFFF',
+  green: '#5E6A60', greenBg: '#E3E7E3', red: '#F4835A', redBg: '#FDE8E0',
+  amberBg: '#EDE4DB', amber: '#7D6450',
 };
 
 const PORTALS = [

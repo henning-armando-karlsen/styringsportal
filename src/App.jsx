@@ -87,14 +87,14 @@ const VikingbadLogo = ({ width = 200, color = '#fff', style = {} }) => (
 
 /* ===== THEME ===== */
 const theme = {
-  bg: '#FBF7EF', surface: '#FFFFFF', surfaceAlt: '#F5EFE3',
-  ink: '#1A2433', inkSoft: '#3A4858', inkMuted: '#7A8493',
-  border: '#E6DCC8', borderSoft: '#F0E8D6',
-  brass: '#B8893B', brassDark: '#9B7230', brassLight: '#F4E9D2',
-  navy: '#1E3247', navyDark: '#152334',
-  sage: '#6B8A6E', sageLight: '#E5EEE3',
-  rust: '#B0533F', rustLight: '#F3E0D8',
-  amber: '#D4A04E', amberLight: '#F8EBC9',
+  bg: '#EDE9DF', surface: '#FFFFFF', surfaceAlt: '#E4DFD4',
+  ink: '#252525', inkSoft: '#4A4A4A', inkMuted: '#7A7A7A',
+  border: '#CBC4AF', borderSoft: '#DDD8CB',
+  brass: '#9D8068', brassDark: '#7D6450', brassLight: '#EDE4DB',
+  navy: '#252525', navyDark: '#1A1A1A',
+  sage: '#5E6A60', sageLight: '#E3E7E3',
+  rust: '#F4835A', rustLight: '#FDE8E0',
+  amber: '#B89070', amberLight: '#F2E8DE',
 };
 
 /* ===== HELPERS ===== */
