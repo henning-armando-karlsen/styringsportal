@@ -66,6 +66,7 @@ const Smile = ico('<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 
 const PinIcon = ico('<line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 2-2V3H6v1a2 2 0 0 0 2 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>');
 const ThumbsUp = ico('<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>');
 const Send2 = ico('<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>');
+const Video = ico('<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect x="2" y="7" width="14" height="10" rx="2"/>');
 
 /* ===== VIKINGBAD LOGO (inline SVG) ===== */
 const VikingbadLogo = ({ width = 200, color = '#fff', style = {} }) => (
@@ -969,6 +970,9 @@ const MeetingCard = ({ meeting, data, onClick }) => {
             <span style={{display:'inline-flex',alignItems:'center',gap:5}}><MapPin size={14}/> {meeting.location||'Ikke satt'}</span>
             <span style={{display:'inline-flex',alignItems:'center',gap:5}}><Clock size={14}/> {totalDuration||meeting.duration} min</span>
             <span style={{display:'inline-flex',alignItems:'center',gap:5}}><ListTodo size={14}/> {meeting.agenda?.length||0} agendapunkter</span>
+            {meeting.video?.provider && (
+              <span style={{display:'inline-flex',alignItems:'center',gap:5,color:theme.sage}}><Video size={14}/> Digitalt møte · {meeting.video.provider==='teams'?'Teams':'Zoom'}</span>
+            )}
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{display:'flex'}}>
@@ -1018,9 +1022,27 @@ const meetingTemplates = {
   ]},
 };
 
+const detectVideoProvider = (url) => {
+  if (!url) return null;
+  if (/teams\.(microsoft|live)\.com/i.test(url)) return 'teams';
+  if (/zoom\.us/i.test(url)) return 'zoom';
+  return null;
+};
+
 const MeetingForm = ({ meeting, data, onSave, onCancel, onDelete }) => {
   const [m,setM] = useState({ title:'', date:new Date().toISOString().slice(0,10), time:'09:00', duration:60, location:'', type:'Ukentlig', status:'planlagt', attendees:[], agenda:[], summary:'', ...meeting });
   const update = (k,v) => setM({...m,[k]:v});
+  const videoProvider = m.video?.provider || '';
+  const videoUrl = m.video?.url || '';
+  const [videoMismatch, setVideoMismatch] = useState(false);
+  const setVideoProvider = (p) => { setM({...m, video: p ? { provider:p, url: videoUrl } : null }); setVideoMismatch(false); };
+  const setVideoUrl = (url) => {
+    const detected = detectVideoProvider(url);
+    const mismatch = detected && videoProvider && detected !== videoProvider;
+    setVideoMismatch(mismatch);
+    if (detected && !videoProvider) setM({...m, video: { provider: detected, url }});
+    else setM({...m, video: { ...m.video, url }});
+  };
   const addAgenda = () => setM({...m, agenda:[...(m.agenda||[]), { id:uid('a'), title:'', presenter:'', duration:10, notes:'' }]});
   const updateAgenda = (idx,patch) => { const next=[...m.agenda]; next[idx]={...next[idx],...patch}; setM({...m,agenda:next}); };
   const removeAgenda = (idx) => setM({...m, agenda:m.agenda.filter((_,i)=>i!==idx)});
@@ -1060,6 +1082,30 @@ const MeetingForm = ({ meeting, data, onSave, onCancel, onDelete }) => {
       <Sel label="Status" value={m.status} onChange={(v)=>update('status',v)} options={[
         {value:'planlagt',label:'Planlagt'},{value:'gjennomført',label:'Gjennomført'},{value:'avlyst',label:'Avlyst'}
       ]}/>
+      <div style={{marginTop:14}}>
+        <div style={{fontSize:11,fontWeight:700,color:theme.inkSoft,textTransform:'uppercase',letterSpacing:0.6,marginBottom:8}}>Videomøte</div>
+        <div style={{display:'flex',gap:8,marginBottom:videoProvider?8:0}}>
+          {['','teams','zoom'].map(p => (
+            <button key={p} type="button" onClick={()=>setVideoProvider(p||null)}
+              style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${(videoProvider||'')=== p?theme.brass:theme.border}`,background:(videoProvider||'')===p?theme.brassLight:theme.surface,color:(videoProvider||'')===p?theme.brassDark:theme.inkSoft,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'inline-flex',alignItems:'center',gap:6}}>
+              {p==='' && 'Ingen'}
+              {p==='teams' && <><Video size={13}/> Teams</>}
+              {p==='zoom' && <><Video size={13}/> Zoom</>}
+            </button>
+          ))}
+        </div>
+        {videoProvider && (
+          <div>
+            <input value={videoUrl} onChange={(e)=>setVideoUrl(e.target.value)} placeholder={videoProvider==='teams'?'Lim inn Teams-lenke':'Lim inn Zoom-lenke'}
+              style={{width:'100%',padding:'9px 12px',border:`1px solid ${theme.border}`,borderRadius:8,fontSize:13,background:theme.surface,color:theme.ink,outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+            {videoMismatch && (
+              <div style={{marginTop:6,fontSize:12,color:theme.rust,display:'flex',alignItems:'center',gap:6}}>
+                <AlertCircle size={13}/> Lenken ser ut til å tilhøre en annen tjeneste enn valgt.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       <div style={{marginTop:6}}>
         <div style={{fontSize:11,fontWeight:700,color:theme.inkSoft,textTransform:'uppercase',letterSpacing:0.6,marginBottom:8}}>Deltakere</div>
         <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
@@ -1718,7 +1764,19 @@ const MeetingDetail = ({ meeting, data, save, onBack, onEdit, currentUserId }) =
             <span style={{display:'inline-flex',alignItems:'center',gap:6}}><MapPin size={15}/> {meeting.location||'Ikke satt'}</span>
             <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Clock size={15}/> {totalDuration||meeting.duration} min</span>
             <span style={{display:'inline-flex',alignItems:'center',gap:6}}><Users size={15}/> {meeting.attendees.length} deltakere</span>
+            {meeting.video?.provider && (
+              <span style={{display:'inline-flex',alignItems:'center',gap:6,color:theme.sage}}><Video size={15}/> Digitalt møte · {meeting.video.provider==='teams'?'Teams':'Zoom'}</span>
+            )}
           </div>
+          {meeting.video?.url && (
+            <div style={{marginTop:14}}>
+              <a href={meeting.video.url} target="_blank" rel="noopener noreferrer"
+                style={{display:'inline-flex',alignItems:'center',gap:8,padding:'10px 18px',borderRadius:8,background:theme.sage,color:'#fff',fontSize:13,fontWeight:600,textDecoration:'none',fontFamily:'inherit',transition:'opacity 150ms'}}
+                onMouseEnter={(e)=>e.currentTarget.style.opacity='0.85'} onMouseLeave={(e)=>e.currentTarget.style.opacity='1'}>
+                <Video size={16}/> Bli med i {meeting.video.provider==='teams'?'Teams':'Zoom'}
+              </a>
+            </div>
+          )}
         </div>
         <div style={{padding:'0 28px',borderBottom:`1px solid ${theme.borderSoft}`,display:'flex',gap:4,overflowX:'auto'}}>
           {[
