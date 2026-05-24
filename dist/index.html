@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vikingbad — Portaler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body, #root { margin:0; padding:0; }
+  body { font-family: 'Manrope', system-ui, sans-serif; background:#FBF7EF; color:#1A2433; }
+  * { box-sizing: border-box; }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.08); opacity: 0.7; }
+  }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid #B8893B; outline-offset: 2px;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #E6DCC8; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #D4C5A4; }
+  @media print {
+    aside, header { display: none !important; }
+    main { padding: 0 !important; }
+  }
+</style>
+  <script type="module" crossorigin src="/assets/index-CVviuWeD.js"></script>
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>
