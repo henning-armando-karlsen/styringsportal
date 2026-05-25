@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 
 const orgChartHtml = `<!doctype html>
 <html lang="no">
@@ -288,11 +288,21 @@ renderLegend();renderTree();
 </html>`;
 
 const OrgChartView = () => {
+  const iframeRef = useRef(null);
+  const handleLoad = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (iframe && iframe.contentDocument) {
+      const h = iframe.contentDocument.documentElement.scrollHeight;
+      iframe.style.height = h + 'px';
+    }
+  }, []);
   return (
-    <div style={{margin:'-40px -48px -80px',height:'calc(100vh)',overflow:'hidden'}}>
+    <div style={{margin:'-40px -48px -80px',minHeight:'100vh',overflow:'auto'}}>
       <iframe
+        ref={iframeRef}
+        onLoad={handleLoad}
         srcDoc={orgChartHtml}
-        style={{width:'100%',height:'100%',border:'none'}}
+        style={{width:'100%',minHeight:'100vh',height:'4000px',border:'none',display:'block'}}
         title="Organisasjonskart"
       />
     </div>
