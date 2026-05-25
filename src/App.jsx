@@ -8,6 +8,7 @@ import HomeView from './components/HomeView';
 import DirectoryView from './components/DirectoryView';
 import OrgChartView from './components/OrgChartView';
 import CalendarView from './components/CalendarView';
+import ArshjulView from './components/ArshjulView';
 import { supabase } from './lib/supabase.js';
 
 /* ===== ICONS (inline lucide-style SVGs) ===== */
@@ -166,10 +167,10 @@ const seedData = () => {
       meetingNoun:'ledermøte',
       meetingNounDef:'ledermøtene',
       sectionStrategy:'Strategi & Plan',
-      navPlans:'Årshjul',
+      navPlans:'Plan',
       navInitiatives:'Initiativer',
       navTeam:'Ledergruppen',
-      plansTitle:'Årshjul',
+      plansTitle:'Plan',
       plansOverline:'Rullerende 12 måneder fremover',
       initiativeTitle:'Initiativer',
       initiativeOverline:'Strategisk portefølje',
@@ -735,7 +736,8 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
     ]},
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
       ...((activePortal === 'marketing' || activePortal === 'sales') ? [{ key:'markedsplan', label:'Markedsplan', icon:Target }] : []),
-      { key:'plans',       label:activePortal === 'marketing' ? 'Innholdskalender' : (org.navPlans || 'Årshjul'), icon:Compass, count:counts.plans },
+      { key:'arshjul',     label:'Årshjul', icon:Repeat },
+      { key:'plans',       label:activePortal === 'marketing' ? 'Innholdskalender' : (org.navPlans || 'Plan'), icon:Compass, count:counts.plans },
       { key:'initiatives', label:org.navInitiatives || 'Initiativer', icon:Briefcase,  count:counts.initiatives },
       { key:'projects',    label:'Prosjekter',   icon:FolderKanban, count:counts.projects },
       { key:'kpis',        label:'Nøkkeltall',   icon:TrendingUp, count:counts.kpis },
@@ -2979,7 +2981,7 @@ const PlansView = ({ data, save, currentUserId, onNavigate }) => {
 
   return (
     <div>
-      <SectionHeading overline={data.org?.plansOverline || 'Rullerende 12 måneder fremover'} title={data.org?.plansTitle || 'Årshjul'}>
+      <SectionHeading overline={data.org?.plansOverline || 'Rullerende 12 måneder fremover'} title={data.org?.plansTitle || 'Plan'}>
         <Btn icon={Inbox} variant="ghost" onClick={()=>setProposalEditing({})}>Meld inn sak</Btn>
         <Btn icon={Plus} variant="brass" onClick={()=>setEditing({})}>Ny plan</Btn>
       </SectionHeading>
@@ -6051,6 +6053,7 @@ const App = ({ identity }) => {
         {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity} forumData={forumData} onOpenForum={handleOpenForum}/>}
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')} sortimentTasks={sortimentAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
+        {view==='arshjul'    && <ArshjulView data={data} save={save} currentUserId={currentUserId} />}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
         {view==='markedsplan' && <MarkedsplanView data={markedsplanData} onChange={saveMarkedsplan} onPushToPortal={handlePushToPortal} members={markedsplanMembers} embedded={true}/>}
         {view==='kalender' && (
