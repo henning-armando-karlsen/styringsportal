@@ -732,7 +732,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       { key:'crossorg',   label:'På tvers',        icon:Command, count:counts.crossorg },
     ]},
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
-      ...((activePortal === 'marketing' || activePortal === 'leadership') ? [{ key:'markedsplan', label:'Markedsplan', icon:Target }] : []),
+      ...((activePortal === 'marketing' || activePortal === 'sales') ? [{ key:'markedsplan', label:'Markedsplan', icon:Target }] : []),
       { key:'plans',       label:activePortal === 'marketing' ? 'Innholdskalender' : (org.navPlans || 'Årshjul'), icon:Compass, count:counts.plans },
       { key:'initiatives', label:org.navInitiatives || 'Initiativer', icon:Briefcase,  count:counts.initiatives },
       { key:'projects',    label:'Prosjekter',   icon:FolderKanban, count:counts.projects },
@@ -5875,7 +5875,7 @@ const App = ({ identity }) => {
 
   const markedsplanMembers = useMemo(() => {
     const seen = {}, out = [];
-    ['marketing', 'sales', 'leadership'].forEach(pid =>
+    ['marketing', 'sales'].forEach(pid =>
       (allData[pid]?.members || []).forEach(m => { if (!seen[m.id]) { seen[m.id] = 1; out.push({ id: m.id, name: m.name }); } })
     );
     return out.sort((a, b) => a.name.localeCompare(b.name, 'no'));
