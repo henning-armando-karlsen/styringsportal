@@ -6062,7 +6062,13 @@ const App = ({ identity }) => {
         {view==='messages'    && <MessagesView      data={data} save={save} currentUserId={currentUserId} focusChannelId={focusChannelId} onClearFocus={()=>setFocusChannelId(null)}/>}
         {view==='documents'   && <DocumentsView     data={data} save={save}/>}
         {view==='team'        && <TeamView          data={data} save={save}/>}
-        {view==='directory'   && <DirectoryView    allData={allData} currentUserId={currentUserId} isAdmin={isAdminUser}/>}
+        {view==='directory'   && <DirectoryView    allData={allData} currentUserId={currentUserId} isAdmin={isAdminUser} onSaveMember={(portalId, updatedMember) => {
+          const [pData, setPData] = stores[portalId] || [];
+          if (!pData) return;
+          const next = { ...pData, members: pData.members.map(m => m.id === updatedMember.id ? { ...m, ...updatedMember } : m) };
+          setPData(next);
+          if (SUPABASE_ENABLED) savePortalContent(portalId, next).catch(err => console.error('Supabase: lagring feilet', err));
+        }}/>}
         {view==='orgchart'   && <OrgChartView/>}
         {view==='admin'       && <AdminPanel/>}
         {view==='forum' && activeForum && activeForumData && (

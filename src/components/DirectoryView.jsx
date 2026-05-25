@@ -34,7 +34,7 @@ function PortalIcon({ icon, size = 20, color = '#fff' }) {
   );
 }
 
-export default function DirectoryView({ allData, currentUserId, isAdmin }) {
+export default function DirectoryView({ allData, currentUserId, isAdmin, onSaveMember }) {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -127,6 +127,7 @@ export default function DirectoryView({ allData, currentUserId, isAdmin }) {
           person={person}
           isAdmin={isAdmin}
           onClose={() => setSelectedPerson(null)}
+          onSave={onSaveMember}
         />
       )}
     </div>
@@ -225,8 +226,25 @@ function PortalSection({ section, allPeople, onSelect }) {
   );
 }
 
-function PersonModal({ person, isAdmin, onClose }) {
+function PersonModal({ person, isAdmin, onClose, onSave }) {
   const portalNames = (person.portals || []).map(pid => portalMeta[pid]?.name || pid);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ name: person.name, role: person.role, email: person.email || '', phone: person.phone || '' });
+
+  const inputStyle = {
+    width: '100%', padding: '9px 12px', borderRadius: 8,
+    border: `1px solid ${C.border}`, fontSize: 13, fontFamily: 'inherit',
+    background: C.surface, color: C.ink, outline: 'none',
+  };
+
+  const handleSave = () => {
+    if (!form.name.trim()) return;
+    const updated = { id: person.id, name: form.name.trim(), role: form.role.trim(), email: form.email.trim(), phone: form.phone.trim(),
+      initials: form.name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() };
+    (person.portals || []).forEach(pid => onSave && onSave(pid, updated));
+    setEditing(false);
+    onClose();
+  };
 
   return (
     <div
@@ -240,84 +258,133 @@ function PersonModal({ person, isAdmin, onClose }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 400, background: C.surface,
+          width: '100%', maxWidth: 420, background: C.surface,
           borderRadius: 16, padding: '30px 28px',
           boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: '50%',
-            background: C.navy, color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, fontWeight: 700,
-          }}>
-            {person.initials || person.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-          </div>
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: C.ink }}>{person.name}</div>
-            <div style={{ fontSize: 13, color: C.inkMuted }}>{person.role}</div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
-          {person.email && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.inkMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-              </svg>
-              <span style={{ fontSize: 13, color: C.ink }}>{person.email}</span>
-            </div>
-          )}
-          {person.phone && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.inkMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-              <span style={{ fontSize: 13, color: C.ink }}>{person.phone}</span>
-            </div>
-          )}
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.inkMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-            Tilhorighet
-          </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {portalNames.map(name => (
-              <span key={name} style={{
-                padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 500,
-                background: C.brassLight, color: C.brassDark,
+        {!editing ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: '50%',
+                background: C.navy, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 16, fontWeight: 700,
               }}>
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
+                {person.initials || person.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: C.ink }}>{person.name}</div>
+                <div style={{ fontSize: 13, color: C.inkMuted }}>{person.role}</div>
+              </div>
+            </div>
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          {isAdmin && (
-            <button
-              style={{
-                padding: '9px 16px', borderRadius: 8, border: `1px solid ${C.border}`,
-                background: C.surface, color: C.ink, fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              Rediger
-            </button>
-          )}
-          <button
-            onClick={onClose}
-            style={{
-              padding: '9px 16px', borderRadius: 8, border: 'none',
-              background: C.brass, color: '#fff', fontSize: 13, fontWeight: 600,
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            Lukk
-          </button>
-        </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              {person.email && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.inkMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                  <span style={{ fontSize: 13, color: C.ink }}>{person.email}</span>
+                </div>
+              )}
+              {person.phone && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.inkMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  <span style={{ fontSize: 13, color: C.ink }}>{person.phone}</span>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.inkMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                Tilhorighet
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {portalNames.map(name => (
+                  <span key={name} style={{
+                    padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 500,
+                    background: C.brassLight, color: C.brassDark,
+                  }}>
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              {isAdmin && onSave && (
+                <button
+                  onClick={() => setEditing(true)}
+                  style={{
+                    padding: '9px 16px', borderRadius: 8, border: `1px solid ${C.border}`,
+                    background: C.surface, color: C.ink, fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Rediger
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                style={{
+                  padding: '9px 16px', borderRadius: 8, border: 'none',
+                  background: C.brass, color: '#fff', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Lukk
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 18 }}>Rediger medarbeider</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 22 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.inkSoft, display: 'block', marginBottom: 4 }}>Navn</label>
+                <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.inkSoft, display: 'block', marginBottom: 4 }}>Rolle / Tittel</label>
+                <input style={inputStyle} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.inkSoft, display: 'block', marginBottom: 4 }}>E-post</label>
+                <input style={inputStyle} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.inkSoft, display: 'block', marginBottom: 4 }}>Telefon</label>
+                <input style={inputStyle} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setEditing(false)}
+                style={{
+                  padding: '9px 16px', borderRadius: 8, border: `1px solid ${C.border}`,
+                  background: C.surface, color: C.ink, fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleSave}
+                style={{
+                  padding: '9px 16px', borderRadius: 8, border: 'none',
+                  background: C.brass, color: '#fff', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Lagre
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
