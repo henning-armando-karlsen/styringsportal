@@ -764,6 +764,8 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       { key:'admin', label:'Admin', icon:ShieldAlert },
     ]}] : []),
   ];
+  const [collapsed, setCollapsed] = useState(() => new Set());
+  const toggleSection = (key) => setCollapsed(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
   const canSwitch = availablePortals.length > 1;
   return (
     <aside style={{width:260,background:theme.navyDark,color:'#E8DFC8',minHeight:'100vh',padding:'24px 0 0',position:'sticky',top:0,alignSelf:'flex-start',flexShrink:0,display:'flex',flexDirection:'column',borderRight:`1px solid ${theme.navyDark}`}}>
@@ -820,11 +822,14 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
         {sections.map((sec,si) => (
           <div key={si} style={{marginBottom: si === sections.length-1 ? 0 : 14}}>
             {sec.label && (
-              <div style={{fontSize:10,color:'#7B6F50',letterSpacing:1.5,textTransform:'uppercase',fontWeight:700,padding:'8px 10px 6px'}}>
-                {sec.label}
-              </div>
+              <button onClick={()=>toggleSection(sec.label)}
+                style={{display:'flex',alignItems:'center',gap:6,width:'100%',background:'transparent',border:'none',cursor:'pointer',fontFamily:'inherit',
+                  fontSize:10,color:'#7B6F50',letterSpacing:1.5,textTransform:'uppercase',fontWeight:700,padding:'8px 10px 6px'}}>
+                <ChevronRight size={12} style={{transform: collapsed.has(sec.label) ? 'none' : 'rotate(90deg)', transition:'transform 120ms'}}/>
+                <span style={{flex:1,textAlign:'left'}}>{sec.label}</span>
+              </button>
             )}
-            {sec.items.map(it => {
+            {(!sec.label || !collapsed.has(sec.label)) && sec.items.map(it => {
               const isActive = active === it.key;
               return (
                 <button key={it.key} onClick={()=>onChange(it.key)}
@@ -848,10 +853,13 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
         ))}
         {myForums.length > 0 && (
           <div style={{marginTop:14}}>
-            <div style={{fontSize:10,color:'#7B6F50',letterSpacing:1.5,textTransform:'uppercase',fontWeight:700,padding:'8px 10px 6px'}}>
-              Møtefora
-            </div>
-            {myForums.map(fid => {
+            <button onClick={()=>toggleSection('Møtefora')}
+              style={{display:'flex',alignItems:'center',gap:6,width:'100%',background:'transparent',border:'none',cursor:'pointer',fontFamily:'inherit',
+                fontSize:10,color:'#7B6F50',letterSpacing:1.5,textTransform:'uppercase',fontWeight:700,padding:'8px 10px 6px'}}>
+              <ChevronRight size={12} style={{transform: collapsed.has('Møtefora') ? 'none' : 'rotate(90deg)', transition:'transform 120ms'}}/>
+              <span style={{flex:1,textAlign:'left'}}>Møtefora</span>
+            </button>
+            {!collapsed.has('Møtefora') && myForums.map(fid => {
               const fm = forumMeta[fid];
               if (!fm) return null;
               const isActive = activeForum === fid && active === 'forum';
