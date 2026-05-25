@@ -737,7 +737,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
       ...((activePortal === 'marketing' || activePortal === 'sales') ? [{ key:'markedsplan', label:'Markedsplan', icon:Target }] : []),
       { key:'arshjul',     label:'Årshjul', icon:Repeat },
-      { key:'plans',       label:activePortal === 'marketing' ? 'Innholdskalender' : (org.navPlans || 'Plan'), icon:Compass, count:counts.plans },
+      ...(activePortal !== 'leadership' ? [{ key:'plans', label: activePortal === 'marketing' ? 'Innholdskalender' : (org.navPlans || 'Plan'), icon:Compass, count:counts.plans }] : []),
       { key:'initiatives', label:org.navInitiatives || 'Initiativer', icon:Briefcase,  count:counts.initiatives },
       { key:'projects',    label:'Prosjekter',   icon:FolderKanban, count:counts.projects },
       { key:'kpis',        label:'Nøkkeltall',   icon:TrendingUp, count:counts.kpis },
