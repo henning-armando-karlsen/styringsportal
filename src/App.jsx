@@ -938,116 +938,6 @@ const TaskRow = ({ task, member, compact, onToggle, onClick }) => {
   );
 };
 
-/* ===== DASHBOARD ===== */
-const Dashboard = ({ data, onNavigate, save }) => {
-  const upcomingMeetings = data.meetings.filter(m=>m.status==='planlagt'&&daysFromNow(m.date)>=0).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3);
-  const pendingTasks = data.tasks.filter(t=>t.status!=='fullført').sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||''));
-  const overdueTasks = pendingTasks.filter(t=>daysFromNow(t.dueDate)<0);
-  const recentDecisions = [...data.decisions].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,4);
-  const nextMeeting = upcomingMeetings[0];
-  const memberById = (id) => data.members.find(m=>m.id===id);
-
-  return (
-    <div>
-      <SectionHeading overline="Velkommen tilbake" title="Oversikt"/>
-      {nextMeeting && (
-        <Card style={{marginBottom:24,padding:0,overflow:'hidden',background:`linear-gradient(135deg, ${theme.navy} 0%, ${theme.navyDark} 100%)`,color:'#fff',border:'none'}}>
-          <div style={{padding:28,position:'relative',overflow:'hidden'}}>
-            <div style={{position:'absolute',top:-40,right:-40,width:200,height:200,borderRadius:'50%',background:'rgba(184,137,59,0.12)'}}/>
-            <div style={{position:'absolute',bottom:-60,right:80,width:140,height:140,borderRadius:'50%',background:'rgba(184,137,59,0.06)'}}/>
-            <div style={{position:'relative'}}>
-              <div style={{fontSize:11,color:theme.brass,letterSpacing:1.5,textTransform:'uppercase',fontWeight:700,marginBottom:8}}>
-                Neste møte · {relativeDate(nextMeeting.date)}
-              </div>
-              <h2 style={{fontFamily:'Fraunces, Georgia, serif',fontSize:30,fontWeight:400,margin:'0 0 16px',letterSpacing:-0.5}}>
-                {nextMeeting.title}
-              </h2>
-              <div style={{display:'flex',gap:24,flexWrap:'wrap',marginBottom:20,opacity:0.85,fontSize:14}}>
-                <div style={{display:'flex',alignItems:'center',gap:8}}><CalendarClock size={16}/> {fmtDateLong(nextMeeting.date)} · {nextMeeting.time}</div>
-                <div style={{display:'flex',alignItems:'center',gap:8}}><MapPin size={16}/> {nextMeeting.location}</div>
-                <div style={{display:'flex',alignItems:'center',gap:8}}><Clock size={16}/> {nextMeeting.duration} min</div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:16,flexWrap:'wrap'}}>
-                <Btn onClick={()=>onNavigate('meetings',nextMeeting.id)} variant="brass" icon={ArrowRight}>Åpne møtet</Btn>
-                <div style={{display:'flex'}}>
-                  {nextMeeting.attendees.slice(0,6).map((id,i) => {
-                    const m = memberById(id);
-                    return <div key={id} style={{marginLeft:i===0?0:-8,border:`2px solid ${theme.navyDark}`,borderRadius:'50%'}}><Avatar member={m} size={32}/></div>;
-                  })}
-                </div>
-                <span style={{fontSize:13,color:'rgba(255,255,255,0.7)'}}>{nextMeeting.attendees.length} deltakere</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))',gap:16,marginBottom:32}}>
-        <KPI label="Åpne oppgaver" value={pendingTasks.length} accent={theme.brass} icon={ListTodo}
-          sub={overdueTasks.length>0?`${overdueTasks.length} forfalt`:'Alt på sporet'}
-          subColor={overdueTasks.length>0?theme.rust:theme.sage}
-          onClick={()=>onNavigate('tasks')}/>
-        <KPI label="Kommende møter" value={upcomingMeetings.length} accent={theme.navy} icon={Calendar}
-          sub={nextMeeting?relativeDate(nextMeeting.date):'Ingen planlagt'} onClick={()=>onNavigate('meetings')}/>
-        <KPI label="Beslutninger" value={data.decisions.length} accent={theme.sage} icon={Gavel}
-          sub={data.decisions.filter(d=>d.status==='vedtatt').length+' vedtatt'} onClick={()=>onNavigate('decisions')}/>
-        <KPI label="Dokumenter" value={data.documents.length} accent={theme.amber} icon={Folder}
-          sub="I delt arkiv" onClick={()=>onNavigate('documents')}/>
-      </div>
-
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(360px, 1fr))',gap:24}}>
-        <Card padded={false}>
-          <div style={{padding:'18px 22px',borderBottom:`1px solid ${theme.borderSoft}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div>
-              <h3 style={{fontFamily:'Fraunces, Georgia, serif',fontSize:20,fontWeight:500,color:theme.ink,margin:0}}>Prioriterte oppgaver</h3>
-              <div style={{fontSize:12,color:theme.inkMuted,marginTop:2}}>{pendingTasks.length} åpne · {overdueTasks.length} forfalt</div>
-            </div>
-            <button onClick={()=>onNavigate('tasks')} style={{background:'transparent',border:'none',color:theme.brass,fontSize:12,fontWeight:600,letterSpacing:0.4,textTransform:'uppercase',cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontFamily:'inherit'}}>
-              Vis alle <ChevronRight size={14}/>
-            </button>
-          </div>
-          <div>
-            {pendingTasks.slice(0,5).map(task => (
-              <TaskRow key={task.id} task={task} member={memberById(task.owner)} compact
-                onToggle={()=>{ const n=task.status==='fullført'?'pågår':'fullført'; save({...data,tasks:data.tasks.map(t=>t.id===task.id?{...t,status:n}:t)}); }}/>
-            ))}
-            {pendingTasks.length===0 && <div style={{padding:30,textAlign:'center',color:theme.inkMuted,fontSize:14}}>Ingen åpne oppgaver – godt jobbet 🎉</div>}
-          </div>
-        </Card>
-
-        <Card padded={false}>
-          <div style={{padding:'18px 22px',borderBottom:`1px solid ${theme.borderSoft}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div>
-              <h3 style={{fontFamily:'Fraunces, Georgia, serif',fontSize:20,fontWeight:500,color:theme.ink,margin:0}}>Siste beslutninger</h3>
-              <div style={{fontSize:12,color:theme.inkMuted,marginTop:2}}>{data.org?.decisionsSub || 'Logg over vedtak fra ledergruppen'}</div>
-            </div>
-            <button onClick={()=>onNavigate('decisions')} style={{background:'transparent',border:'none',color:theme.brass,fontSize:12,fontWeight:600,letterSpacing:0.4,textTransform:'uppercase',cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontFamily:'inherit'}}>
-              Vis alle <ChevronRight size={14}/>
-            </button>
-          </div>
-          <div>
-            {recentDecisions.map((d,i) => {
-              const m = memberById(d.owner); const sc = statusColor(d.status);
-              return (
-                <div key={d.id} style={{padding:'14px 22px',borderBottom:i<recentDecisions.length-1?`1px solid ${theme.borderSoft}`:'none',display:'flex',alignItems:'flex-start',gap:12}}>
-                  <div style={{width:4,alignSelf:'stretch',background:sc.fg,borderRadius:2,flexShrink:0}}/>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:14,fontWeight:600,color:theme.ink,marginBottom:4}}>{d.title}</div>
-                    <div style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'center',fontSize:12,color:theme.inkMuted}}>
-                      <span>{fmtDate(d.date)}</span>{m && <span>· Eier: {m.name}</span>}
-                      <Pill bg={sc.bg} color={sc.fg}>{statusLabels[d.status]||d.status}</Pill>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            {recentDecisions.length===0 && <div style={{padding:30,textAlign:'center',color:theme.inkMuted,fontSize:14}}>Ingen beslutninger registrert ennå</div>}
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
-};
 
 /* ===== MEETING CARD ===== */
 const MeetingCard = ({ meeting, data, onClick }) => {
@@ -4642,9 +4532,15 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
           sub={myMentions.length>0?`${myMentions.length} omtaler deg`:'Hold dialogen i gang'}
           subColor={myMentions.length>0?theme.rust:theme.inkMuted}
           onClick={()=>onNavigate('messages')}/>
-        <KPI label="Reviewer å gjøre" value={myDecisionReviews.length} accent={theme.rust} icon={Bell}
-          sub={myDecisionReviews.length>0?'Krever oppmerksomhet':'Alt fulgt opp'}
-          onClick={()=>onNavigate('decisions')}/>
+        {activePortal !== 'leadership' ? (
+          <KPI label="Reviewer å gjøre" value={myDecisionReviews.length} accent={theme.rust} icon={Bell}
+            sub={myDecisionReviews.length>0?'Krever oppmerksomhet':'Alt fulgt opp'}
+            onClick={()=>onNavigate('decisions')}/>
+        ) : (
+          <KPI label="Beslutninger · LG" value="→" accent={theme.rust} icon={Bell}
+            sub="Åpne i Møtefora"
+            onClick={()=>onOpenForum&&onOpenForum('forum:lg')}/>
+        )}
       </div>
 
       {/* Two columns: tasks + decision reviews */}
@@ -6054,7 +5950,6 @@ const App = ({ identity }) => {
         {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity} forumData={forumData} onOpenForum={handleOpenForum}/>}
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
-        {view==='dashboard'   && <Dashboard         data={data} onNavigate={handleNavigate} save={save}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
         {view==='initiatives' && <InitiativesView   data={data} save={save}/>}
         {view==='projects'    && <ProjectsView      data={data} save={save} crossorgData={crossorgData} saveCrossorg={saveCrossorg} allData={allData} currentUserId={currentUserId} activePortal={activePortal}/>}
