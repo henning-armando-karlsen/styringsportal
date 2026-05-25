@@ -480,8 +480,26 @@ const portalMeta = {
   produkt:    { id:'produkt',    name:'Produkt & Sourcing',subtitle:'Produkt & Sourcing',desc:'Utvikling, design, lansering og leverandørkjede', icon:'compass', restricted:false },
 };
 
+/* ===== MØTEFORA (tverrgående grupper) ===== */
+const FORUM_IDS = ['forum:ulg', 'forum:dmg', 'forum:sug', 'forum:lgf'];
+const forumMeta = {
+  'forum:ulg': { id:'forum:ulg', name:'Utvidet ledergruppe', abbr:'ULG', color:'#9D8068', memberCount:17 },
+  'forum:dmg': { id:'forum:dmg', name:'Driftsmøtegruppe', abbr:'DMG', color:'#5C7A93', memberCount:6 },
+  'forum:sug': { id:'forum:sug', name:'Sortimentsutviklingsgruppe', abbr:'SUG', color:'#F4835A', memberCount:6 },
+  'forum:lgf': { id:'forum:lgf', name:'Ledergruppe – deltaker fag', abbr:'LGF', color:'#93A28C', memberCount:1 },
+};
+const forumMembership = {
+  'forum:ulg': ['svk','tm','om','henning','elh','hba','ak','svb','cb','er','ghl','mo','sms','sl','tpj','po','ee'],
+  'forum:dmg': ['svk','om','sl','tpj','po','ee'],
+  'forum:sug': ['svk','om','ak','ghl','sl','tpj'],
+  'forum:lgf': ['tpj'],
+};
+const emptyForumData = (forumId) => ({
+  org: { portalId: forumId, portalName: forumMeta[forumId]?.name, orgName: forumMeta[forumId]?.name, type:'forum', chair: '', teamLabel: forumMeta[forumId]?.abbr, teamOverline:'Tverrgående forum', groupNoun: forumMeta[forumId]?.abbr, meetingNoun: `${forumMeta[forumId]?.abbr}-møte`, meetingNounDef: `${forumMeta[forumId]?.abbr}-møtene`, proposalsOverline:`Innmeldte saker til ${forumMeta[forumId]?.abbr}`, decisionsSub:`Vedtak fattet i ${forumMeta[forumId]?.abbr}`, navTeam:'Medlemmer' },
+  members: [], meetings: [], decisions: [], tasks: [], documents: [], agendaProposals: [], channels: [], messages: [], readState: {}
+});
+
 /* ===== TVERRGÅENDE PROGRAMMER (kobler avdelingene sammen) ===== */
-/* Felles satsninger som flere avdelinger bidrar til. Items i hver portal er merket med program-id. */
 const programs = [];
 const programById = (id) => programs.find(p => p.id === id);
 
@@ -700,7 +718,7 @@ const PortalSwitcher = ({ availablePortals, activePortal, onSwitchPortal }) => {
 };
 
 /* ===== SIDEBAR ===== */
-const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUser, onSearch, org={}, availablePortals=[], activePortal, onSwitchPortal, onLogout, showAdmin, identity }) => {
+const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUser, onSearch, org={}, availablePortals=[], activePortal, onSwitchPortal, onLogout, showAdmin, identity, myForums=[], activeForum, onOpenForum, forumData={} }) => {
   const me = members.find(m => m.id === currentUserId);
   const displayName = me ? me.name.split(' ').slice(0,2).join(' ') : (identity ? identity.name : null);
   const displayRole = me ? me.role : (identity?.isAdmin ? 'Administrator' : null);
@@ -818,6 +836,32 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
             })}
           </div>
         ))}
+        {myForums.length > 0 && (
+          <div style={{marginTop:14}}>
+            <div style={{fontSize:10,color:'#7B6F50',letterSpacing:1.5,textTransform:'uppercase',fontWeight:700,padding:'8px 10px 6px'}}>
+              Møtefora
+            </div>
+            {myForums.map(fid => {
+              const fm = forumMeta[fid];
+              if (!fm) return null;
+              const isActive = activeForum === fid && active === 'forum';
+              const fMembers = (forumData[fid]?.members || []).length || fm.memberCount;
+              return (
+                <button key={fid} onClick={()=>onOpenForum(fid)}
+                  style={{display:'flex',alignItems:'center',gap:10,padding:'9px 14px',width:'100%',borderRadius:8,
+                    background:isActive?fm.color:'transparent',color:isActive?'#fff':'#D0C4A4',
+                    border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:isActive?600:500,
+                    marginBottom:1,textAlign:'left',transition:'all 120ms',letterSpacing:0.1}}
+                  onMouseEnter={(e)=>{ if(!isActive) e.currentTarget.style.background='rgba(184,137,59,0.12)'; }}
+                  onMouseLeave={(e)=>{ if(!isActive) e.currentTarget.style.background='transparent'; }}>
+                  <span style={{width:8,height:8,borderRadius:'50%',background:fm.color,flexShrink:0}}/>
+                  <span style={{flex:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{fm.abbr}</span>
+                  <span style={{background:isActive?'rgba(255,255,255,0.22)':'rgba(184,137,59,0.15)',color:isActive?'#fff':'#A89978',fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:999}}>{fMembers}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </nav>
       <div style={{padding:'0 14px 14px'}}>
         <div style={{background:'rgba(184,137,59,0.08)',border:'1px solid rgba(184,137,59,0.15)',borderRadius:10,padding:'14px 16px'}}>
@@ -4453,7 +4497,7 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
 };
 
 /* ===== MITT SKRIVEBORD ===== */
-const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allData={} }) => {
+const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allData={}, forumData={} }) => {
   const me = data.members.find(m => m.id === currentUserId);
   if (!me) {
     return <EmptyState icon={Users} title="Velg hvem du er pålogget som"
@@ -4461,7 +4505,8 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
   }
 
   const memberById = (id) => data.members.find(m => m.id === id);
-  const myTasks = data.tasks.filter(t => t.owner === me.id && t.status !== 'fullført')
+  const forumTasksList = Object.entries(forumData||{}).flatMap(([fid,fd])=>(fd.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført').map(t=>({...t,_forum:fid})));
+  const myTasks = [...data.tasks.filter(t => t.owner === me.id && t.status !== 'fullført'), ...forumTasksList]
     .sort((a,b) => (a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
   const overdueTasks = myTasks.filter(t => t.dueDate && daysFromNow(t.dueDate) < 0);
   const myMeetings = data.meetings.filter(m =>
@@ -5738,6 +5783,60 @@ const LoginScreen = ({ leadershipMembers, marketingMembers, salesMembers, innkjo
   );
 };
 
+/* ===== FORUM VIEW (tverrgående møtefora) ===== */
+const forumTabs = [
+  { key:'meetings',  label:'Møter',           icon:Calendar },
+  { key:'proposals', label:'Innmeldte saker', icon:Inbox },
+  { key:'decisions', label:'Beslutninger',    icon:Gavel },
+  { key:'tasks',     label:'Oppgaver',        icon:ListTodo },
+  { key:'documents', label:'Dokumenter',      icon:Folder },
+  { key:'team',      label:'Medlemmer',       icon:Users },
+];
+const ForumView = ({ forumId, data, save, currentUserId, forumView, onChangeView, isAdmin }) => {
+  const fm = forumMeta[forumId];
+  const chair = data.members?.find(m => m.id === data.org?.chair);
+  return (
+    <div>
+      <div style={{marginBottom:28,padding:'22px 26px',background:theme.surface,border:`1px solid ${theme.border}`,borderRadius:12,borderLeft:`4px solid ${fm?.color||theme.brass}`}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+          <span style={{width:10,height:10,borderRadius:'50%',background:fm?.color}}/>
+          <span style={{fontSize:10,letterSpacing:1.5,textTransform:'uppercase',fontWeight:700,color:fm?.color}}>{fm?.abbr} — Tverrgående forum</span>
+        </div>
+        <div style={{fontSize:22,fontWeight:300,letterSpacing:-0.3,color:theme.ink}}>{fm?.name}</div>
+        <div style={{fontSize:13,color:theme.inkMuted,marginTop:4}}>{data.org?.purpose}</div>
+        {chair && <div style={{fontSize:12,color:theme.inkSoft,marginTop:8}}>Møteleder: <b>{chair.name}</b></div>}
+        <div style={{display:'flex',gap:4,marginTop:10,flexWrap:'wrap'}}>
+          {(data.members||[]).slice(0,12).map(m => (
+            <div key={m.id} title={m.name} style={{width:28,height:28,borderRadius:'50%',background:fm?.color||theme.brass,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700}}>{m.initials||m.name?.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+          ))}
+          {(data.members||[]).length > 12 && <div style={{width:28,height:28,borderRadius:'50%',background:theme.surfaceAlt,color:theme.inkMuted,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700}}>+{(data.members||[]).length-12}</div>}
+        </div>
+      </div>
+      <div style={{display:'flex',gap:4,marginBottom:24,borderBottom:`1px solid ${theme.border}`,paddingBottom:2}}>
+        {forumTabs.map(tab => {
+          const isActive = forumView === tab.key;
+          return (
+            <button key={tab.key} onClick={()=>onChangeView(tab.key)}
+              style={{display:'flex',alignItems:'center',gap:7,padding:'9px 14px',borderRadius:'8px 8px 0 0',
+                background:isActive?theme.surface:'transparent',color:isActive?theme.ink:theme.inkMuted,
+                border:isActive?`1px solid ${theme.border}`:'1px solid transparent',borderBottom:isActive?'1px solid #fff':'none',
+                cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:isActive?600:500,transition:'all 120ms'}}>
+              <tab.icon size={14}/>
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+      {forumView==='meetings'  && <MeetingsView  data={data} save={save} currentUserId={currentUserId}/>}
+      {forumView==='proposals' && <ProposalsView  data={data} save={save} currentUserId={currentUserId}/>}
+      {forumView==='decisions' && <DecisionsView  data={data} save={save}/>}
+      {forumView==='tasks'     && <TasksView      data={data} save={save}/>}
+      {forumView==='documents' && <DocumentsView  data={data} save={save}/>}
+      {forumView==='team'      && <TeamView       data={data} save={save}/>}
+    </div>
+  );
+};
+
 /* ===== APP ===== */
 const App = ({ identity }) => {
   const [leadershipData, setLeadershipData] = useState(seedData);
@@ -5756,11 +5855,20 @@ const App = ({ identity }) => {
   const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [isAdminUser, setIsAdminUser] = useState(false);
 
+  // Forum state
+  const [forumData, setForumData] = useState({});
+  const [activeForum, setActiveForum] = useState(null);
+  const [forumView, setForumView] = useState('meetings');
+
   // Last inn data fra Supabase når backend er konfigurert (ellers brukes lokale seed-data)
   useEffect(() => {
     if (!SUPABASE_ENABLED) return;
-    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), crossorg: { projects: [] } })
-      .then(all => { setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.crossorg) setCrossorgData(all.crossorg); })
+    const forumSeeds = {}; FORUM_IDS.forEach(fid => { forumSeeds[fid] = emptyForumData(fid); });
+    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), crossorg: { projects: [] }, ...forumSeeds })
+      .then(all => {
+        setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.crossorg) setCrossorgData(all.crossorg);
+        const fd = {}; FORUM_IDS.forEach(fid => { if(all[fid]) fd[fid] = all[fid]; }); setForumData(fd);
+      })
       .catch(err => console.error('Supabase: lasting feilet', err));
     checkIsAdmin().then(setIsAdminUser);
   }, []);
@@ -5833,12 +5941,33 @@ const App = ({ identity }) => {
   };
 
   const handleNavigate = (v, focusId) => {
+    setActiveForum(null);
     setView(v);
     if (focusId) {
       if (v === 'meetings') setFocusMeetingId(focusId);
       else if (v === 'messages') setFocusChannelId(focusId);
     }
   };
+
+  // Forum handlers
+  const handleOpenForum = (forumId) => {
+    setActiveForum(forumId);
+    setForumView('meetings');
+    setView('forum');
+    resetTransient();
+  };
+  const handleForumNavigate = (v) => { setForumView(v); };
+  const activeForumData = activeForum ? (forumData[activeForum] || emptyForumData(activeForum)) : null;
+  const saveForumData = (newData) => {
+    if (!activeForum) return;
+    setForumData(prev => ({ ...prev, [activeForum]: newData }));
+    if (SUPABASE_ENABLED) savePortalContent(activeForum, newData).catch(err => console.error('Supabase: forum save feilet', err));
+  };
+  const myForums = useMemo(() => {
+    if (isAdminUser) return FORUM_IDS;
+    if (!currentUserId) return [];
+    return FORUM_IDS.filter(fid => (forumMembership[fid] || []).includes(currentUserId));
+  }, [currentUserId, isAdminUser]);
 
   // Tastatursnarvei: ⌘K / Ctrl-K åpner søk (kun når innlogget)
   useEffect(() => {
@@ -5900,10 +6029,14 @@ const App = ({ identity }) => {
         onSwitchPortal={handleSwitchPortal}
         onLogout={handleLogout}
         showAdmin={isAdminUser}
-        identity={identity}/>
+        identity={identity}
+        myForums={myForums}
+        activeForum={activeForum}
+        onOpenForum={handleOpenForum}
+        forumData={forumData}/>
       <main style={{flex:1,padding:'40px 48px 80px',minWidth:0,maxWidth:1280,position:'relative'}}>
-        {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity}/>}
-        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData}/>}
+        {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity} forumData={forumData} onOpenForum={handleOpenForum}/>}
+        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='dashboard'   && <Dashboard         data={data} onNavigate={handleNavigate} save={save}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
@@ -5921,6 +6054,17 @@ const App = ({ identity }) => {
         {view==='directory'   && <DirectoryView    allData={allData} currentUserId={currentUserId} isAdmin={isAdminUser}/>}
         {view==='orgchart'   && <OrgChartView/>}
         {view==='admin'       && <AdminPanel/>}
+        {view==='forum' && activeForum && activeForumData && (
+          <ForumView
+            forumId={activeForum}
+            data={activeForumData}
+            save={saveForumData}
+            currentUserId={currentUserId}
+            forumView={forumView}
+            onChangeView={handleForumNavigate}
+            isAdmin={isAdminUser}
+          />
+        )}
       </main>
 
       {/* Flytende AI-knapp – alltid synlig */}
