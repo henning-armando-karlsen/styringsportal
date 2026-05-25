@@ -4501,7 +4501,7 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
 };
 
 /* ===== MITT SKRIVEBORD ===== */
-const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allData={}, forumData={} }) => {
+const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allData={}, forumData={}, activePortal, onOpenForum }) => {
   const me = data.members.find(m => m.id === currentUserId);
   if (!me) {
     return <EmptyState icon={Users} title="Velg hvem du er pålogget som"
@@ -4617,15 +4617,27 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
           sub={overdueTasks.length>0?`${overdueTasks.length} forfalt`:'På sporet'}
           subColor={overdueTasks.length>0?theme.rust:theme.sage}
           onClick={()=>onNavigate('tasks')}/>
-        <KPI label="Mine møter fremover" value={myMeetings.length} accent={theme.navy} icon={Calendar}
-          sub={nextMeeting?relativeDate(nextMeeting.date):'Ingen'}
-          onClick={()=>onNavigate('meetings')}/>
+        {activePortal !== 'leadership' ? (
+          <KPI label="Mine møter fremover" value={myMeetings.length} accent={theme.navy} icon={Calendar}
+            sub={nextMeeting?relativeDate(nextMeeting.date):'Ingen'}
+            onClick={()=>onNavigate('meetings')}/>
+        ) : (
+          <KPI label="Ledergruppemøter" value="LG" accent={theme.navy} icon={Calendar}
+            sub="Åpne i Møtefora"
+            onClick={()=>onOpenForum&&onOpenForum('forum:lg')}/>
+        )}
         <KPI label={`Mine ${data.org?.initiativeNoun || 'initiativ'}er`} value={myInitiatives.length} accent={theme.amber} icon={Briefcase}
           sub={`${myInitiatives.filter(i=>i.healthStatus==='rød').length} i trøbbel`}
           onClick={()=>onNavigate('initiatives')}/>
-        <KPI label="Mine saker" value={myOpenProposals.length} accent={theme.brassDark} icon={Inbox}
-          sub={myOpenProposals.length>0?`${myOpenProposals.filter(p=>!p.meetingId).length} i puljen`:'Ingen ventende'}
-          onClick={()=>onNavigate('proposals')}/>
+        {activePortal !== 'leadership' ? (
+          <KPI label="Mine saker" value={myOpenProposals.length} accent={theme.brassDark} icon={Inbox}
+            sub={myOpenProposals.length>0?`${myOpenProposals.filter(p=>!p.meetingId).length} i puljen`:'Ingen ventende'}
+            onClick={()=>onNavigate('proposals')}/>
+        ) : (
+          <KPI label="Innmeldte saker" value="LG" accent={theme.brassDark} icon={Inbox}
+            sub="Åpne i Møtefora"
+            onClick={()=>onOpenForum&&onOpenForum('forum:lg')}/>
+        )}
         <KPI label="Uleste samtaler" value={totalUnreadCount} accent={theme.sage} icon={MessageCircle}
           sub={myMentions.length>0?`${myMentions.length} omtaler deg`:'Hold dialogen i gang'}
           subColor={myMentions.length>0?theme.rust:theme.inkMuted}
@@ -6040,7 +6052,7 @@ const App = ({ identity }) => {
         forumData={forumData}/>
       <main style={{flex:1,padding:'40px 48px 80px',minWidth:0,maxWidth:1280,position:'relative'}}>
         {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity} forumData={forumData} onOpenForum={handleOpenForum}/>}
-        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData}/>}
+        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='dashboard'   && <Dashboard         data={data} onNavigate={handleNavigate} save={save}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}

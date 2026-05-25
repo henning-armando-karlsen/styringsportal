@@ -102,9 +102,16 @@ export default function HomeView({ data, currentUserId, onNavigate, save, allDat
         <KpiTile label="Mine apne oppgaver" value={myTasks.length}
           sub={tomorrowTasks.length>0?`${tomorrowTasks.length} forfaller i morgen`:overdueTasks.length>0?`${overdueTasks.length} forfalt`:'Pa sporet'}
           subColor={overdueTasks.length>0?theme.rust:theme.sage} onClick={()=>onNavigate('tasks')}/>
-        <KpiTile label="Moter denne uka" value={myMeetings.length}
-          sub={nextMeeting?`Neste: ${nextMeeting.title.slice(0,25)}`:'Ingen planlagt'}
-          onClick={()=>onNavigate('meetings')}/>
+        {activePortal !== 'leadership' ? (
+          <KpiTile label="Moter denne uka" value={myMeetings.length}
+            sub={nextMeeting?`Neste: ${nextMeeting.title.slice(0,25)}`:'Ingen planlagt'}
+            onClick={()=>onNavigate('meetings')}/>
+        ) : (
+          <KpiTile label="Ledergruppemoter" value="LG"
+            sub="Apne i Motefora"
+            subColor={theme.brass}
+            onClick={()=>onOpenForum&&onOpenForum('forum:lg')}/>
+        )}
         <KpiTile label="Venter pa meg" value={attentionItems.length}
           sub={attentionItems.length>0?`${overdueTasks.length} forfalt`:'Ingenting venter'}
           subColor={attentionItems.length>0?theme.rust:theme.sage}
