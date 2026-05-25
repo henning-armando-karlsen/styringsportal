@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SUPABASE_ENABLED, loadAllPortals, savePortalContent } from './lib/dataSource';
 import AdminPanel, { checkIsAdmin } from './components/AdminPanel';
+import ProjectsView from './components/ProjectsView';
 import { supabase } from './lib/supabase.js';
 
 /* ===== ICONS (inline lucide-style SVGs) ===== */
@@ -67,6 +68,7 @@ const PinIcon = ico('<line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1
 const ThumbsUp = ico('<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>');
 const Send2 = ico('<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>');
 const Video = ico('<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect x="2" y="7" width="14" height="10" rx="2"/>');
+const FolderKanban = ico('<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/>');
 
 /* ===== VIKINGBAD LOGO (inline SVG) ===== */
 const VikingbadLogo = ({ width = 200, color = '#fff', style = {} }) => (
@@ -200,6 +202,7 @@ const seedData = () => {
     documents: [],
     plans: [],
     initiatives: [],
+    projects: [],
     kpis: [],
     risks: [],
     agendaProposals: [],
@@ -267,6 +270,7 @@ const seedMarketing = () => {
     documents: [],
     plans: [],
     initiatives: [],
+    projects: [],
     kpis: [],
     risks: [],
     agendaProposals: [],
@@ -334,6 +338,7 @@ const seedSales = () => {
     documents: [],
     plans: [],
     initiatives: [],
+    projects: [],
     kpis: [],
     risks: [],
     agendaProposals: [],
@@ -386,6 +391,7 @@ const seedInnkjop = () => {
     documents: [],
     plans: [],
     initiatives: [],
+    projects: [],
     kpis: [],
     risks: [],
     agendaProposals: [],
@@ -447,6 +453,7 @@ const seedProdukt = () => {
     documents: [],
     plans: [],
     initiatives: [],
+    projects: [],
     kpis: [],
     risks: [],
     agendaProposals: [],
@@ -648,6 +655,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
       { key:'plans',       label:org.navPlans || 'Årshjul',           icon:Compass,    count:counts.plans },
       { key:'initiatives', label:org.navInitiatives || 'Initiativer', icon:Briefcase,  count:counts.initiatives },
+      { key:'projects',    label:'Prosjekter',   icon:FolderKanban, count:counts.projects },
       { key:'kpis',        label:'Nøkkeltall',   icon:TrendingUp, count:counts.kpis },
       { key:'risks',       label:'Risiko',       icon:ShieldAlert,count:counts.risks },
     ]},
@@ -5686,6 +5694,7 @@ const App = () => {
   const [salesData, setSalesData]           = useState(seedSales);
   const [innkjopData, setInnkjopData]       = useState(seedInnkjop);
   const [produktData, setProduktData]       = useState(seedProdukt);
+  const [crossorgData, setCrossorgData]     = useState({ projects: [] });
   const [currentUserId, setCurrentUserId]   = useState(null);
   const [activePortal, setActivePortal]     = useState(null);
   const [view, setView] = useState('desk');
@@ -5699,8 +5708,8 @@ const App = () => {
   // Last inn data fra Supabase når backend er konfigurert (ellers brukes lokale seed-data)
   useEffect(() => {
     if (!SUPABASE_ENABLED) return;
-    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt() })
-      .then(all => { setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); })
+    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), crossorg: { projects: [] } })
+      .then(all => { setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.crossorg) setCrossorgData(all.crossorg); })
       .catch(err => console.error('Supabase: lasting feilet', err));
     checkIsAdmin().then(setIsAdminUser);
   }, []);
@@ -5716,6 +5725,7 @@ const App = () => {
   const data = (stores[activePortal] || stores.leadership)[0];
   const rawSave = (stores[activePortal] || stores.leadership)[1];
   const save = (newData) => { rawSave(newData); if (SUPABASE_ENABLED && activePortal) savePortalContent(activePortal, newData).catch(err => console.error('Supabase: lagring feilet', err)); };
+  const saveCrossorg = (newData) => { setCrossorgData(newData); if (SUPABASE_ENABLED) savePortalContent('crossorg', newData).catch(err => console.error('Supabase: crossorg lagring feilet', err)); };
   const allData = { leadership:leadershipData, marketing:marketingData, sales:salesData, innkjop:innkjopData, produkt:produktData };
   const availablePortals = currentUserId ? (portalAccess[currentUserId] || []) : [];
 
@@ -5781,6 +5791,10 @@ const App = () => {
       onLogin={handleLogin}/>;
   }
 
+  const deptProjects = (data.projects || []).filter(p=>p.status!=='fullført'&&p.status!=='avlyst');
+  const crossProjects = (crossorgData.projects || []).filter(p=>p.status!=='fullført'&&p.status!=='avlyst');
+  const myProjectCount = [...deptProjects, ...crossProjects].filter(p => p.lead===currentUserId || (p.members||[]).some(m=>m.memberId===currentUserId)).length;
+
   const counts = {
     meetings: data.meetings.filter(m=>m.status==='planlagt'&&daysFromNow(m.date)>=0).length,
     decisions: data.decisions.length,
@@ -5789,6 +5803,7 @@ const App = () => {
     team: data.members.length,
     plans: (data.plans || []).length,
     initiatives: (data.initiatives || []).filter(i=>i.status!=='fullført'&&i.status!=='avlyst').length,
+    projects: deptProjects.length + myProjectCount,
     kpis: (data.kpis || []).length,
     risks: (data.risks || []).filter(r=>r.status==='aktiv').length,
     proposals: (data.agendaProposals || []).filter(p=>p.status==='foreslått').length,
@@ -5815,6 +5830,7 @@ const App = () => {
         {view==='dashboard'   && <Dashboard         data={data} onNavigate={handleNavigate} save={save}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
         {view==='initiatives' && <InitiativesView   data={data} save={save}/>}
+        {view==='projects'    && <ProjectsView      data={data} save={save} crossorgData={crossorgData} saveCrossorg={saveCrossorg} allData={allData} currentUserId={currentUserId} activePortal={activePortal}/>}
         {view==='kpis'        && <KpisView          data={data} save={save}/>}
         {view==='risks'       && <RisksView         data={data} save={save}/>}
         {view==='meetings'    && <MeetingsView      data={data} save={save} focusMeetingId={focusMeetingId} onClearFocus={()=>setFocusMeetingId(null)} currentUserId={currentUserId}/>}
