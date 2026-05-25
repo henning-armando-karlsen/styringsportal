@@ -772,7 +772,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       <div style={{padding:'0 24px 18px',borderBottom:'1px solid rgba(232,223,200,0.1)'}}>
         <VikingbadLogo width={200} color="#fff"/>
         <div style={{fontSize:11,color:'#A89978',letterSpacing:1.8,textTransform:'uppercase',fontWeight:600,marginTop:10,paddingLeft:2}}>
-          {org.portalName || 'Ledergruppeportal'}
+          {org.portalName || 'Fellesportal'}
         </div>
       </div>
 
