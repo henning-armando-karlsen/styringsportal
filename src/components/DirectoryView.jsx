@@ -10,7 +10,7 @@ const C = {
 };
 
 const portalMeta = {
-  leadership: { name: 'Ledergruppen', subtitle: 'Ledergruppeportal', icon: 'shield', color: '#252525', restricted: true },
+  leadership: { name: 'Ledergruppen', subtitle: 'Fellesportal', icon: 'shield', color: '#252525', restricted: true },
   marketing:  { name: 'Markedsavdelingen', subtitle: 'Markedsportal', icon: 'megaphone', color: '#9D8068' },
   sales:      { name: 'Salgsavdelingen', subtitle: 'Salgsportal', icon: 'trending', color: '#5E6A60' },
   innkjop:    { name: 'Innkjøpsavdelingen', subtitle: 'Innkjøpsportal', icon: 'clipboard', color: '#7D6450' },
