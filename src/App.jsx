@@ -646,8 +646,10 @@ const FilterTabs = ({ value, onChange, options }) => (
 );
 
 /* ===== SIDEBAR ===== */
-const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUser, onSearch, org={}, availablePortals=[], activePortal, onSwitchPortal, onLogout, showAdmin }) => {
+const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUser, onSearch, org={}, availablePortals=[], activePortal, onSwitchPortal, onLogout, showAdmin, identity }) => {
   const me = members.find(m => m.id === currentUserId);
+  const displayName = me ? me.name.split(' ').slice(0,2).join(' ') : (identity ? identity.name : null);
+  const displayRole = me ? me.role : (identity?.isAdmin ? 'Administrator' : null);
   const sections = [
     { label: null, items: [
       { key:'home',       label:'Hjem',            icon:Home },
@@ -713,19 +715,29 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
         </div>
       )}
 
-      {/* Bruker-velger */}
+      {/* Brukerinfo */}
       <div style={{padding:'14px 14px 10px',borderBottom:'1px solid rgba(232,223,200,0.08)'}}>
-        <button onClick={onSwitchUser}
-          style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',width:'100%',borderRadius:8,background:'rgba(184,137,59,0.08)',border:'1px solid rgba(184,137,59,0.15)',cursor:'pointer',fontFamily:'inherit',textAlign:'left',transition:'all 120ms'}}
-          onMouseEnter={(e)=>e.currentTarget.style.background='rgba(184,137,59,0.15)'}
-          onMouseLeave={(e)=>e.currentTarget.style.background='rgba(184,137,59,0.08)'}>
-          {me ? <Avatar member={me} size={32}/> : <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center',color:'#A89978'}}><Users size={14}/></div>}
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:10,color:'#A89978',letterSpacing:0.6,textTransform:'uppercase',fontWeight:600}}>Pålogget som</div>
-            <div style={{fontSize:13,color:'#fff',fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{me?me.name.split(' ').slice(0,2).join(' '):'Velg bruker'}</div>
+        {onSwitchUser ? (
+          <button onClick={onSwitchUser}
+            style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',width:'100%',borderRadius:8,background:'rgba(184,137,59,0.08)',border:'1px solid rgba(184,137,59,0.15)',cursor:'pointer',fontFamily:'inherit',textAlign:'left',transition:'all 120ms'}}
+            onMouseEnter={(e)=>e.currentTarget.style.background='rgba(184,137,59,0.15)'}
+            onMouseLeave={(e)=>e.currentTarget.style.background='rgba(184,137,59,0.08)'}>
+            {me ? <Avatar member={me} size={32}/> : <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center',color:'#A89978'}}><Users size={14}/></div>}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:10,color:'#A89978',letterSpacing:0.6,textTransform:'uppercase',fontWeight:600}}>Pålogget som</div>
+              <div style={{fontSize:13,color:'#fff',fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{displayName || 'Velg bruker'}</div>
+            </div>
+            <ChevronRight size={14} style={{color:'#A89978'}}/>
+          </button>
+        ) : displayName ? (
+          <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px'}}>
+            {me ? <Avatar member={me} size={32}/> : <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(184,137,59,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#DCC49C',fontSize:12,fontWeight:700}}>{(displayName||'').split(' ').map(w=>w[0]).join('').slice(0,2)}</div>}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,color:'#fff',fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{displayName}</div>
+              {displayRole && <div style={{fontSize:11,color:'#A89978',marginTop:1}}>{displayRole}</div>}
+            </div>
           </div>
-          <ChevronRight size={14} style={{color:'#A89978'}}/>
-        </button>
+        ) : null}
       </div>
 
       {/* Søk */}
@@ -5725,6 +5737,24 @@ const App = ({ identity }) => {
     setIsAdminUser(identity.isAdmin);
   }, [identity]);
 
+  // Ensure logged-in user exists in the active portal's content.members
+  const memberInjectedRef = useRef({});
+  useEffect(() => {
+    if (!identity || !activePortal) return;
+    if (memberInjectedRef.current[activePortal]) return;
+    const storeMap = { leadership:[leadershipData,setLeadershipData], marketing:[marketingData,setMarketingData], sales:[salesData,setSalesData], innkjop:[innkjopData,setInnkjopData], produkt:[produktData,setProduktData] };
+    const storeEntry = storeMap[activePortal];
+    if (!storeEntry) return;
+    const [portalData, setPortalData] = storeEntry;
+    const members = portalData.members || [];
+    if (members.find(m => m.id === identity.handle)) { memberInjectedRef.current[activePortal] = true; return; }
+    const newMember = { id: identity.handle, name: identity.name || identity.handle, role: identity.isAdmin ? 'Administrator' : 'Medlem', email: identity.email || '', initials: (identity.name || identity.handle).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() };
+    const updated = { ...portalData, members: [...members, newMember] };
+    setPortalData(updated);
+    memberInjectedRef.current[activePortal] = true;
+    if (SUPABASE_ENABLED) savePortalContent(activePortal, updated).catch(err => console.error('Supabase: member-inject save feilet', err));
+  }, [identity, activePortal, leadershipData, marketingData, salesData, innkjopData, produktData]);
+
   const loggedIn = !!currentUserId && !!activePortal;
   const stores = {
     leadership: [leadershipData, setLeadershipData],
@@ -5833,7 +5863,8 @@ const App = ({ identity }) => {
         activePortal={activePortal}
         onSwitchPortal={handleSwitchPortal}
         onLogout={handleLogout}
-        showAdmin={isAdminUser}/>
+        showAdmin={isAdminUser}
+        identity={identity}/>
       <main style={{flex:1,padding:'40px 48px 80px',minWidth:0,maxWidth:1280,position:'relative'}}>
         {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity}/>}
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData}/>}
