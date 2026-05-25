@@ -7,6 +7,7 @@ import MarkedsplanView from './components/MarkedsplanView';
 import HomeView from './components/HomeView';
 import DirectoryView from './components/DirectoryView';
 import OrgChartView from './components/OrgChartView';
+import CalendarView from './components/CalendarView';
 import { supabase } from './lib/supabase.js';
 
 /* ===== ICONS (inline lucide-style SVGs) ===== */
@@ -729,6 +730,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
     { label: null, items: [
       { key:'home',       label:'Hjem',            icon:Home },
       { key:'desk',       label:'Mitt skrivebord', icon:LayoutDashboard },
+      { key:'kalender',   label:'Kalender',        icon:CalendarClock },
       { key:'crossorg',   label:'På tvers',        icon:Command, count:counts.crossorg },
     ]},
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
@@ -6051,6 +6053,18 @@ const App = ({ identity }) => {
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
         {view==='markedsplan' && <MarkedsplanView data={markedsplanData} onChange={saveMarkedsplan} onPushToPortal={handlePushToPortal} members={markedsplanMembers} embedded={true}/>}
+        {view==='kalender' && (
+          <CalendarView
+            data={data}
+            allData={allData}
+            currentUserId={currentUserId}
+            markedsplanTasks={markedsplanAssignments}
+            sortimentTasks={sortimentAssignments}
+            onNavigate={handleNavigate}
+            onSaveEvents={(next) => save({ ...data, calendarEvents: next })}
+            activePortal={activePortal}
+          />
+        )}
         {view==='initiatives' && <InitiativesView   data={data} save={save}/>}
         {view==='projects'    && <ProjectsView      data={data} save={save} crossorgData={crossorgData} saveCrossorg={saveCrossorg} allData={allData} currentUserId={currentUserId} activePortal={activePortal}/>}
         {view==='kpis'        && <KpisView          data={data} save={save}/>}
