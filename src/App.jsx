@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SUPABASE_ENABLED, loadAllPortals, savePortalContent } from './lib/dataSource';
 import AdminPanel, { checkIsAdmin } from './components/AdminPanel';
 import ProjectsView from './components/ProjectsView';
+import MarkedsplanView from './components/MarkedsplanView';
 import HomeView from './components/HomeView';
 import DirectoryView from './components/DirectoryView';
 import OrgChartView from './components/OrgChartView';
@@ -731,7 +732,8 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       { key:'crossorg',   label:'På tvers',        icon:Command, count:counts.crossorg },
     ]},
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
-      { key:'plans',       label:org.navPlans || 'Årshjul',           icon:Compass,    count:counts.plans },
+      ...((activePortal === 'marketing' || activePortal === 'leadership') ? [{ key:'markedsplan', label:'Markedsplan', icon:Target }] : []),
+      { key:'plans',       label:activePortal === 'marketing' ? 'Innholdskalender' : (org.navPlans || 'Årshjul'), icon:Compass, count:counts.plans },
       { key:'initiatives', label:org.navInitiatives || 'Initiativer', icon:Briefcase,  count:counts.initiatives },
       { key:'projects',    label:'Prosjekter',   icon:FolderKanban, count:counts.projects },
       { key:'kpis',        label:'Nøkkeltall',   icon:TrendingUp, count:counts.kpis },
@@ -5757,6 +5759,7 @@ const App = ({ identity }) => {
   const [innkjopData, setInnkjopData]       = useState(seedInnkjop);
   const [produktData, setProduktData]       = useState(seedProdukt);
   const [crossorgData, setCrossorgData]     = useState({ projects: [] });
+  const [markedsplanData, setMarkedsplanData] = useState({});
   const [currentUserId, setCurrentUserId]   = useState(null);
   const [activePortal, setActivePortal]     = useState(null);
   const [view, setView] = useState('home');
@@ -5776,9 +5779,9 @@ const App = ({ identity }) => {
   useEffect(() => {
     if (!SUPABASE_ENABLED) return;
     const forumSeeds = {}; FORUM_IDS.forEach(fid => { forumSeeds[fid] = emptyForumData(fid); });
-    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), crossorg: { projects: [] }, ...forumSeeds })
+    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), crossorg: { projects: [] }, markedsplan: {}, ...forumSeeds })
       .then(all => {
-        setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.crossorg) setCrossorgData(all.crossorg);
+        setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.crossorg) setCrossorgData(all.crossorg); if(all.markedsplan) setMarkedsplanData(all.markedsplan);
         const fd = {}; FORUM_IDS.forEach(fid => { if(all[fid]) fd[fid] = all[fid]; }); setForumData(fd);
       })
       .catch(err => console.error('Supabase: lasting feilet', err));
@@ -5823,7 +5826,32 @@ const App = ({ identity }) => {
   const rawSave = (stores[activePortal] || stores.leadership)[1];
   const save = (newData) => { rawSave(newData); if (SUPABASE_ENABLED && activePortal) savePortalContent(activePortal, newData).catch(err => console.error('Supabase: lagring feilet', err)); };
   const saveCrossorg = (newData) => { setCrossorgData(newData); if (SUPABASE_ENABLED) savePortalContent('crossorg', newData).catch(err => console.error('Supabase: crossorg lagring feilet', err)); };
+  const saveMarkedsplan = (next) => { setMarkedsplanData(next); if (SUPABASE_ENABLED) savePortalContent('markedsplan', next).catch(err => console.error('Supabase: markedsplan lagring feilet', err)); };
   const allData = { leadership:leadershipData, marketing:marketingData, sales:salesData, innkjop:innkjopData, produkt:produktData };
+
+  const handlePushToPortal = async (items) => {
+    if (!SUPABASE_ENABLED) return;
+    const portalSetters = { marketing: setMarketingData, sales: setSalesData, leadership: setLeadershipData };
+    const portalGetters = { marketing: marketingData, sales: salesData, leadership: leadershipData };
+    const grouped = {};
+    items.forEach(item => { if (!grouped[item.portal]) grouped[item.portal] = []; grouped[item.portal].push(item); });
+    Object.entries(grouped).forEach(([portalId, posts]) => {
+      const setter = portalSetters[portalId];
+      const current = portalGetters[portalId];
+      if (!setter || !current) return;
+      const nextData = { ...current };
+      const tasks = [...(nextData.tasks || [])];
+      posts.forEach(item => {
+        const entry = { id: item.externalId, external_id: item.externalId, title: item.tittel, owner: item.ansvarlig, status: item.status === 'done' ? 'fullført' : item.status === 'in_progress' ? 'pågår' : 'planlagt', source: 'markedsplan', dueDate: item.frist || '' };
+        const idx = tasks.findIndex(t => t.external_id === item.externalId);
+        if (idx >= 0) { tasks[idx] = { ...tasks[idx], ...entry }; } else { tasks.push(entry); }
+      });
+      nextData.tasks = tasks;
+      setter(nextData);
+      savePortalContent(portalId, nextData).catch(err => console.error(`Supabase: ${portalId} push feilet`, err));
+    });
+  };
+
   const availablePortals = identity ? identity.portals : (currentUserId ? (portalAccess[currentUserId] || []) : []);
 
   const resetTransient = () => { setSearchOpen(false); setAssistantOpen(false); setUserPickerOpen(false); setFocusMeetingId(null); setFocusChannelId(null); };
@@ -5951,6 +5979,7 @@ const App = ({ identity }) => {
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
+        {view==='markedsplan' && <MarkedsplanView data={markedsplanData} onChange={saveMarkedsplan} onPushToPortal={handlePushToPortal} embedded={true}/>}
         {view==='initiatives' && <InitiativesView   data={data} save={save}/>}
         {view==='projects'    && <ProjectsView      data={data} save={save} crossorgData={crossorgData} saveCrossorg={saveCrossorg} allData={allData} currentUserId={currentUserId} activePortal={activePortal}/>}
         {view==='kpis'        && <KpisView          data={data} save={save}/>}
