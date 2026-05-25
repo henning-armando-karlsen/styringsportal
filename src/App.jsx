@@ -481,14 +481,16 @@ const portalMeta = {
 };
 
 /* ===== MØTEFORA (tverrgående grupper) ===== */
-const FORUM_IDS = ['forum:ulg', 'forum:dmg', 'forum:sug', 'forum:lgf'];
+const FORUM_IDS = ['forum:lg', 'forum:ulg', 'forum:dmg', 'forum:sug', 'forum:lgf'];
 const forumMeta = {
+  'forum:lg':  { id:'forum:lg',  name:'Ledergruppe', abbr:'LG', color:'#5E6A60', memberCount:9 },
   'forum:ulg': { id:'forum:ulg', name:'Utvidet ledergruppe', abbr:'ULG', color:'#9D8068', memberCount:17 },
   'forum:dmg': { id:'forum:dmg', name:'Driftsmøtegruppe', abbr:'DMG', color:'#5C7A93', memberCount:6 },
   'forum:sug': { id:'forum:sug', name:'Sortimentsutviklingsgruppe', abbr:'SUG', color:'#F4835A', memberCount:6 },
   'forum:lgf': { id:'forum:lgf', name:'Ledergruppe – deltaker fag', abbr:'LGF', color:'#93A28C', memberCount:1 },
 };
 const forumMembership = {
+  'forum:lg':  ['svk','tm','om','henning','elh','ak','ghl','sl','ee'],
   'forum:ulg': ['svk','tm','om','henning','elh','hba','ak','svb','cb','er','ghl','mo','sms','sl','tpj','po','ee'],
   'forum:dmg': ['svk','om','sl','tpj','po','ee'],
   'forum:sug': ['svk','om','ak','ghl','sl','tpj'],
