@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 
 /* Selvstendig kalender for Styringsportalen.
    - Aggregerer det som allerede har dato: moter, oppgavefrister (inkl. markedsplan + sortiment),
@@ -70,6 +70,31 @@ function monthWeeks(year, month) {
   return weeks;
 }
 
+/* ── dagvisning: konstanter + overlapp-layout ──────────────────────── */
+const HOUR_PX = 48;
+const DAY_GUTTER = 54;
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+
+function layoutDay(timed) {
+  const sorted = [...timed].sort((a, b) => a.start - b.start || a.end - b.end);
+  let cluster = [], clusters = [], curEnd = -1;
+  sorted.forEach((ev) => {
+    if (cluster.length && ev.start >= curEnd) { clusters.push(cluster); cluster = []; curEnd = -1; }
+    cluster.push(ev); curEnd = Math.max(curEnd, ev.end);
+  });
+  if (cluster.length) clusters.push(cluster);
+  clusters.forEach((cl) => {
+    const colEnds = [];
+    cl.forEach((ev) => {
+      let placed = false;
+      for (let i = 0; i < colEnds.length; i++) { if (ev.start >= colEnds[i]) { ev._col = i; colEnds[i] = ev.end; placed = true; break; } }
+      if (!placed) { ev._col = colEnds.length; colEnds.push(ev.end); }
+    });
+    cl.forEach((ev) => { ev._ncol = colEnds.length; });
+  });
+  return sorted;
+}
+
 const Btn = ({ children, onClick, variant = 'ghost', icon: Icon, style = {} }) => {
   const v = variant === 'brass'
     ? { bg: theme.brass, fg: '#fff', bd: theme.brass }
@@ -93,8 +118,13 @@ export default function CalendarView({
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [scope, setScope] = useState('mine');     // 'mine' | 'avdeling'
-  const [mode, setMode] = useState('maned');       // 'maned' | 'agenda'
+  const [mode, setMode] = useState('maned');       // 'maned' | 'dag' | 'agenda'
   const [editing, setEditing] = useState(null);    // event-objekt under redigering
+  const [selectedDay, setSelectedDay] = useState(todayISO);
+  const [, setNowTick] = useState(0);
+  const dayRef = useRef(null);
+  useEffect(() => { if (mode === 'dag' && dayRef.current) dayRef.current.scrollTop = 7 * HOUR_PX - 12; }, [mode, selectedDay]);
+  useEffect(() => { const id = setInterval(() => setNowTick((t) => t + 1), 60000); return () => clearInterval(id); }, []);
 
   const members = data.members || [];
   const memberById = (id) => members.find((m) => m.id === id);
@@ -117,7 +147,7 @@ export default function CalendarView({
     (data.meetings || []).forEach((m) => {
       if (m.status === 'avlyst') return;
       if (mine && !(m.attendees || []).includes(currentUserId)) return;
-      add({ key: 'm:' + m.id, date: m.date, time: m.time, title: m.title, type: 'mote',
+      add({ key: 'm:' + m.id, date: m.date, time: m.time, dur: m.duration || 60, title: m.title, type: 'mote',
         sub: m.location || '', onClick: () => onNavigate('meetings', m.id) });
     });
 
@@ -146,7 +176,7 @@ export default function CalendarView({
       const isMine = e.scope === 'personlig' && e.owner === currentUserId;
       const isDelt = e.scope === 'delt' && (e._portal === activePortal);
       if (mine ? !isMine : !isDelt) return;
-      add({ key: 'e:' + e.id, date: e.date, endDate: e.endDate, time: e.allDay ? '' : e.time,
+      add({ key: 'e:' + e.id, date: e.date, endDate: e.endDate, time: e.allDay ? '' : e.time, dur: 60,
         title: e.title, type: e.scope === 'personlig' ? 'personlig' : 'delt', sub: e.location || '',
         editable: true, raw: e, onClick: () => setEditing(e) });
     });
@@ -166,6 +196,7 @@ export default function CalendarView({
     if (mm < 0) { mm = 11; yy--; } if (mm > 11) { mm = 0; yy++; }
     setMonth(mm); setYear(yy);
   };
+  const stepDay = (d) => { const x = parseISO(selectedDay); x.setDate(x.getDate() + d); setSelectedDay(toISO(x)); };
 
   /* ── lagring av hendelser (i aktiv portal) ──────────────────────── */
   const saveEvent = (ev) => {
@@ -220,7 +251,7 @@ export default function CalendarView({
           ))}
         </div>
         <div style={{ display: 'flex', background: theme.surfaceAlt, borderRadius: 9, padding: 3 }}>
-          {[['maned', 'Måned'], ['agenda', 'Agenda']].map(([k, l]) => (
+          {[['maned', 'Måned'], ['dag', 'Dag'], ['agenda', 'Agenda']].map(([k, l]) => (
             <button key={k} onClick={() => setMode(k)} style={{ padding: '7px 14px', borderRadius: 7, border: 'none',
               background: mode === k ? theme.surface : 'transparent', color: mode === k ? theme.ink : theme.inkSoft,
               fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>{l}</button>
@@ -261,7 +292,8 @@ export default function CalendarView({
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
                       <span style={{ fontSize: 12, fontWeight: isToday ? 700 : 500, color: isToday ? '#fff' : theme.inkSoft,
                         background: isToday ? theme.brass : 'transparent', borderRadius: '50%', width: 22, height: 22,
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{d.getDate()}</span>
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        onClick={() => { setSelectedDay(iso); setMode('dag'); }}>{d.getDate()}</span>
                     </div>
                     {evs.slice(0, 3).map((e) => {
                       const t = TYPE[e.type];
@@ -275,7 +307,7 @@ export default function CalendarView({
                         </div>
                       );
                     })}
-                    {evs.length > 3 && <div onClick={() => setMode('agenda')} style={{ fontSize: 10.5, color: theme.brass, fontWeight: 600, cursor: 'pointer', paddingLeft: 4 }}>+{evs.length - 3} til</div>}
+                    {evs.length > 3 && <div onClick={() => { setSelectedDay(iso); setMode('dag'); }} style={{ fontSize: 10.5, color: theme.brass, fontWeight: 600, cursor: 'pointer', paddingLeft: 4 }}>+{evs.length - 3} til</div>}
                   </div>
                 );
               })}
@@ -283,6 +315,70 @@ export default function CalendarView({
           ))}
         </div>
       )}
+
+      {/* DAGVISNING (Outlook-stil) */}
+      {mode === 'dag' && (() => {
+        const dayEvs = byDate[selectedDay] || [];
+        const allDayEvs = dayEvs.filter((e) => !e.time);
+        const timed = layoutDay(dayEvs.filter((e) => e.time).map((e) => {
+          const [h, mi] = e.time.split(':').map(Number);
+          const start = h * 60 + (mi || 0);
+          return { ...e, start, end: start + (e.dur || 60) };
+        }));
+        const now = new Date();
+        const nowMin = selectedDay === todayISO ? now.getHours() * 60 + now.getMinutes() : -1;
+        return (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+              <button onClick={() => stepDay(-1)} style={navBtn}><IcLeft /></button>
+              <div style={{ ...heading, fontSize: 19, minWidth: 230, textTransform: 'capitalize' }}>{fmtLong(selectedDay)}</div>
+              <button onClick={() => stepDay(1)} style={navBtn}><IcRight /></button>
+              <button onClick={() => setSelectedDay(todayISO)} style={{ ...navBtn, width: 'auto', padding: '0 12px', fontSize: 12.5, fontWeight: 600 }}>I dag</button>
+            </div>
+            <div style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 12, overflow: 'hidden' }}>
+              {allDayEvs.length > 0 && (
+                <div style={{ position: 'relative', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', padding: '10px 14px 10px 60px', borderBottom: `1px solid ${theme.borderSoft}`, background: theme.surfaceAlt }}>
+                  <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10.5, color: theme.inkMuted, fontWeight: 600 }}>Hele dagen</span>
+                  {allDayEvs.map((e) => { const t = TYPE[e.type]; return (
+                    <div key={e.key} onClick={e.onClick} title={e.title} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 9px', borderRadius: 6, background: t.wash, borderLeft: `3px solid ${t.bg}`, cursor: 'pointer', fontSize: 12.5, color: theme.ink }}>{e.title}</div>
+                  ); })}
+                </div>
+              )}
+              <div ref={dayRef} style={{ position: 'relative', maxHeight: 560, overflowY: 'auto' }}>
+                <div style={{ position: 'relative', height: 24 * HOUR_PX }}>
+                  {HOURS.map((h) => (
+                    <div key={h} onClick={() => setEditing({ id: uid(), title: '', date: selectedDay, endDate: '', allDay: false, time: pad(h) + ':00', scope: 'personlig', owner: currentUserId, location: '', notes: '' })}
+                      style={{ position: 'absolute', top: h * HOUR_PX, left: 0, right: 0, height: HOUR_PX, borderTop: `1px solid ${theme.borderSoft}`, cursor: 'pointer' }}>
+                      <span style={{ position: 'absolute', top: -7, left: 8, fontSize: 10.5, color: theme.inkMuted, background: theme.surface, padding: '0 3px' }}>{pad(h)}:00</span>
+                    </div>
+                  ))}
+                  {nowMin >= 0 && (
+                    <div style={{ position: 'absolute', top: (nowMin / 60) * HOUR_PX, left: DAY_GUTTER - 4, right: 6, height: 0, borderTop: `2px solid ${theme.rust}`, zIndex: 5 }}>
+                      <span style={{ position: 'absolute', left: -6, top: -5, width: 9, height: 9, borderRadius: '50%', background: theme.rust }} />
+                    </div>
+                  )}
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: DAY_GUTTER, right: 6, pointerEvents: 'none' }}>
+                    {timed.map((e) => {
+                      const t = TYPE[e.type];
+                      const top = (e.start / 60) * HOUR_PX;
+                      const hgt = Math.max(((e.end - e.start) / 60) * HOUR_PX - 2, 22);
+                      return (
+                        <div key={e.key} onClick={e.onClick} title={e.title}
+                          style={{ position: 'absolute', top, height: hgt, left: `${(e._col / e._ncol) * 100}%`, width: `calc(${(1 / e._ncol) * 100}% - 4px)`,
+                            background: t.wash, borderLeft: `3px solid ${t.bg}`, borderRadius: 6, padding: '3px 7px', cursor: 'pointer', pointerEvents: 'auto', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                          <div style={{ fontSize: 11, color: theme.inkMuted }}>{e.time}</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 600, color: theme.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
+                          {hgt > 44 && e.sub && <div style={{ fontSize: 11, color: theme.inkMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.sub}</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* AGENDA */}
       {mode === 'agenda' && (
