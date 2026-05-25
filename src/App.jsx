@@ -476,7 +476,7 @@ const portalAccess = {
   tpj:['produkt'], po:['produkt'],
 };
 const portalMeta = {
-  leadership: { id:'leadership', name:'Ledergruppen',     subtitle:'Ledergruppeportal', desc:'Strategi, beslutninger og styring', icon:'shield',    restricted:true  },
+  leadership: { id:'leadership', name:'Ledergruppen',     subtitle:'Fellesportal', desc:'Strategi, beslutninger og styring', icon:'shield',    restricted:true  },
   marketing:  { id:'marketing',  name:'Markedsavdelingen', subtitle:'Markedsportal',     desc:'Kampanjer, innhold og merkevare',   icon:'megaphone', restricted:false },
   sales:      { id:'sales',      name:'Salgsavdelingen',   subtitle:'Salgsportal',       desc:'Pipeline, forhandlere og ordre',    icon:'trending',  restricted:false },
   innkjop:    { id:'innkjop',    name:'Innkjøpsavdelingen',subtitle:'Innkjøpsportal',    desc:'Leverandører, kontrakter og forsyning', icon:'clipboard', restricted:false },
