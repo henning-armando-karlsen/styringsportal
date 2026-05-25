@@ -159,7 +159,7 @@ const seedData = () => {
     initialized:true,
     org: {
       portalId:'leadership',
-      portalName:'Ledergruppeportal',
+      portalName:'Fellesportal',
       orgName:'Ledergruppen',
       teamLabel:'Ledergruppen',
       teamOverline:'Personene bak beslutningene',
