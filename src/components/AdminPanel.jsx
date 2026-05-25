@@ -16,6 +16,14 @@ const PORTALS = [
   { id: 'produkt', name: 'Produkt' },
 ];
 
+const FORUMS = [
+  { id: 'forum:lg', name: 'LG' },
+  { id: 'forum:ulg', name: 'ULG' },
+  { id: 'forum:dmg', name: 'DMG' },
+  { id: 'forum:sug', name: 'SUG' },
+  { id: 'forum:lgf', name: 'LGF' },
+];
+
 export async function checkIsAdmin() {
   const { data, error } = await supabase.rpc('is_admin');
   if (error) return false;
@@ -244,6 +252,7 @@ function RegisterForm({ onSuccess, setError }) {
   const [phone, setPhone] = useState('');
   const [handle, setHandle] = useState('');
   const [selectedPortals, setSelectedPortals] = useState([]);
+  const [selectedForums, setSelectedForums] = useState([]);
   const [primaryPortal, setPrimaryPortal] = useState('');
   const [role, setRole] = useState('member');
   const [makeAdmin, setMakeAdmin] = useState(false);
@@ -317,11 +326,17 @@ function RegisterForm({ onSuccess, setError }) {
             { onConflict: 'portal_id,profile_id' }
           );
         }
+        for (const fid of selectedForums) {
+          await supabase.from('portal_members').upsert(
+            { portal_id: fid, profile_id: userId, member_role: 'member' },
+            { onConflict: 'portal_id,profile_id' }
+          );
+        }
       }
 
       setResult({ success: true, email, userId });
       setName(''); setEmail(''); setPhone(''); setHandle('');
-      setSelectedPortals([]); setPrimaryPortal(''); setRole('member'); setMakeAdmin(false);
+      setSelectedPortals([]); setSelectedForums([]); setPrimaryPortal(''); setRole('member'); setMakeAdmin(false);
       setTimeout(() => onSuccess(), 2000);
     } catch (err) {
       setError(err.message || 'Noe gikk galt');
@@ -387,6 +402,30 @@ function RegisterForm({ onSuccess, setError }) {
                   }}
                 >
                   {p.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.inkSoft, marginBottom: 8 }}>Møtefora</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {FORUMS.map(f => {
+              const active = selectedForums.includes(f.id);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setSelectedForums(prev => prev.includes(f.id) ? prev.filter(x=>x!==f.id) : [...prev, f.id])}
+                  style={{
+                    padding: '6px 12px', borderRadius: 20, border: 'none', fontSize: 12, fontWeight: 500,
+                    cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s',
+                    background: active ? '#E0E8EB' : '#F0ECE4',
+                    color: active ? '#5C7A93' : C.inkSoft,
+                  }}
+                >
+                  {f.name}
                 </button>
               );
             })}
@@ -475,7 +514,7 @@ function UserRow({ profile, members, currentUserId, saving, getMembership, isUse
           {admin ? 'Admin' : 'Gjor admin'}
         </button>
       </div>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
         {PORTALS.map(portal => {
           const membership = getMembership(profile.id, portal.id);
           const active = !!membership;
@@ -494,6 +533,30 @@ function UserRow({ profile, members, currentUserId, saving, getMembership, isUse
               }}
             >
               {portal.name}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 10, color: C.inkMuted, fontWeight: 600, marginRight: 2 }}>Forum:</span>
+        {FORUMS.map(forum => {
+          const membership = getMembership(profile.id, forum.id);
+          const active = !!membership;
+          const isSaving = saving === `${profile.id}-${forum.id}`;
+          return (
+            <button
+              key={forum.id}
+              onClick={() => onTogglePortal(profile.id, forum.id)}
+              disabled={isSaving}
+              style={{
+                padding: '3px 8px', borderRadius: 20, border: 'none', fontSize: 10, fontWeight: 500,
+                cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                background: active ? '#E0E8EB' : '#F0ECE4',
+                color: active ? '#5C7A93' : C.inkSoft,
+                opacity: isSaving ? 0.5 : 1,
+              }}
+            >
+              {forum.name}
             </button>
           );
         })}

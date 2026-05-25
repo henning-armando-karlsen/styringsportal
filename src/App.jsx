@@ -737,12 +737,14 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       { key:'kpis',        label:'Nøkkeltall',   icon:TrendingUp, count:counts.kpis },
       { key:'risks',       label:'Risiko',       icon:ShieldAlert,count:counts.risks },
     ]},
-    { label: 'Møter & Beslutninger', items: [
+    ...(activePortal === 'leadership' ? [{ label: 'Oppgaver', items: [
+      { key:'tasks', label:'Oppgaver', icon:ListTodo, count:counts.tasks },
+    ]}] : [{ label: 'Møter & Beslutninger', items: [
       { key:'meetings',    label:'Møter',          icon:Calendar,   count:counts.meetings },
       { key:'proposals',   label:'Innmeldte saker',icon:Inbox,      count:counts.proposals },
       { key:'decisions',   label:'Beslutninger',   icon:Gavel,      count:counts.decisions },
       { key:'tasks',       label:'Oppgaver',       icon:ListTodo,   count:counts.tasks },
-    ]},
+    ]}]),
     { label: 'Samarbeid', items: [
       { key:'messages',    label:'Samtaler',     icon:MessageCircle, count:counts.unreadMessages },
     ]},

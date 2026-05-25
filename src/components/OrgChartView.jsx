@@ -204,35 +204,35 @@ const orgChartHtml = `<!doctype html>
 <script>
 document.getElementById('logoslot').innerHTML = '<svg class="logo" viewBox="0 0 566.93 85.07" fill="currentColor" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vikingbad"><g><path d="m143.11,47.04h0l32.88-31.76h-16.3l-29.2,28.24V15.28h-11.8v68.6h11.8v-24.63c9.17-6.26,15.47.77,18.11,4.31l14.72,20.32h14.71l-19.06-26.06c-1.82-2.49-7.61-10.6-15.86-10.78Z"/><polygon points="267.95 65.53 235.22 15.59 235.01 15.28 221.76 15.28 221.76 83.89 233.52 83.89 233.52 33.35 266.56 83.89 279.72 83.89 279.72 15.28 267.95 15.28 267.95 65.53"/><path d="m413.76,45.19c3.78-2.87,6.08-7.42,6.08-12.2,0-8.7-7.29-17.7-19.49-17.7h-24.7v68.61h27.56c12.95,0,22.71-9.21,22.71-21.43,0-7.66-4.73-14.3-12.16-17.27Zm-26.84-19.7h13.14c4.92,0,8.49,3.31,8.49,7.88s-3.65,7.88-8.49,7.88h-13.14v-15.75Zm15.9,48.2h-15.9v-22.34h15.9c6.84,0,11.82,4.68,11.82,11.12s-4.97,11.22-11.82,11.22Z"/><path d="m459.24,15.28l-28.73,68.61h12.42l7.25-17.46h29.96l7.24,17.46h12.32l-28.63-68.61h-11.83Zm-4.56,40.28l10.48-25.12,10.47,25.12h-20.95Z"/><path d="m531.6,15.28h-22.63v68.61h22.63c20.8,0,35.33-14.15,35.33-34.39s-14.53-34.21-35.33-34.21Zm0,57.74h-10.87V26.14h10.87c14.1,0,23.57,9.38,23.57,23.35s-9.48,23.53-23.57,23.53Z"/><rect x="86.49" y="15.28" width="11.83" height="68.61"/><rect x="188.28" y="15.28" width="11.83" height="68.61"/><path d="m331.05,54.89h16.51v14.23c-3.98,3.12-9.91,4.98-15.94,4.98-14.33,0-25.12-10.53-25.12-24.51s10.76-24.51,25.03-24.51c6.69,0,13.21,1.82,18.42,5.14l.6.38,5.33-8.45-.46-.4c-5.62-4.94-14.27-7.66-24.37-7.66-20.91,0-36.69,15.26-36.69,35.49s15.81,35.49,36.79,35.49c11.69,0,21.4-3.67,28.07-10.63l.2-.2v-30.23h-28.37v10.89Z"/><polygon points="48.5 9.24 37.95 0 27.42 9.24 37.95 31.31 48.5 9.24"/><polygon points="37.96 67.65 12.88 15.28 0 15.28 31.91 83.89 32.02 83.89 43.89 83.89 44.01 83.89 75.92 15.28 63.04 15.28 37.96 67.65"/></g></svg>';
 
-var G={LG:{name:'Ledergruppe',color:'var(--g-lg)'},LGF:{name:'Ledergruppe \\u2013 deltaker fag',color:'var(--g-lgf)'},ULG:{name:'Utvidet ledergruppe',color:'var(--g-ulg)'},DMG:{name:'Driftsm\\u00f8tegruppe',color:'var(--g-dmg)'},SUG:{name:'Sortimentsutviklingsgruppe',color:'var(--g-sug)'}};
+var G={LG:{name:'Ledergruppe',color:'var(--g-lg)'},LGF:{name:'Ledergruppe – deltaker fag',color:'var(--g-lgf)'},ULG:{name:'Utvidet ledergruppe',color:'var(--g-ulg)'},DMG:{name:'Driftsmøtegruppe',color:'var(--g-dmg)'},SUG:{name:'Sortimentsutviklingsgruppe',color:'var(--g-sug)'}};
 var ORDER=['LG','LGF','ULG','DMG','SUG'];
 
-var ceo={tagName:'Toppledelse',nm:'Stein Viggo Karlsen',ti:'Administrerende direkt\\u00f8r \\u00b7 CEO',email:'svk@vikingbad.no',groups:['LG','SUG','DMG','ULG']};
+var ceo={tagName:'Toppledelse',nm:'Stein Viggo Karlsen',ti:'Administrerende direktør · CEO',email:'svk@vikingbad.no',groups:['LG','SUG','DMG','ULG']};
 
 var stab=[
-  {nm:'Tonny Morewood',ti:'Direkt\\u00f8r for Teknologi og IKT \\u00b7 CIO',email:'tonny@vikingbad.no',groups:['LG','ULG'],reports:[{nm:'Eirik Halvorsen',ti:'Systemutvikler IKT',email:'eh@vikingbad.no',groups:[]}]},
-  {nm:'\\u00d8rjan Moy Jacobsen',ti:'Spesialist Analyse',email:'orjan@vikingbad.no',groups:['LG','SUG','DMG','ULG']},
-  {tag:'Ekstern r\\u00e5dgiver',nm:'Henning Karlsen',ti:'Strategi',ext:true,groups:['LG','ULG']},
-  {nm:'Espen L\\u00f8vberg Hansen',ti:'Direkt\\u00f8r \\u00d8konomi og Finans \\u00b7 CFO',email:'espen.lovberg.hansen@vikingbad.no',groups:['LG','ULG'],reports:[{nm:'Hanne Birkenes Aamlid',ti:'HR-leder',email:'hanne@vikingbad.no',groups:['ULG']}]}
+  {nm:'Tonny Morewood',ti:'Direktør for Teknologi og IKT · CIO',email:'tonny@vikingbad.no',groups:['LG','ULG'],reports:[{nm:'Eirik Halvorsen',ti:'Systemutvikler IKT',email:'eh@vikingbad.no',groups:[]}]},
+  {nm:'Ørjan Moy Jacobsen',ti:'Spesialist Analyse',email:'orjan@vikingbad.no',groups:['LG','SUG','DMG','ULG']},
+  {tag:'Ekstern rådgiver',nm:'Henning Karlsen',ti:'Strategi',ext:true,groups:['LG','ULG']},
+  {nm:'Espen Løvberg Hansen',ti:'Direktør Økonomi og Finans · CFO',email:'espen.lovberg.hansen@vikingbad.no',groups:['LG','ULG'],reports:[{nm:'Hanne Birkenes Aamlid',ti:'HR-leder',email:'hanne@vikingbad.no',groups:['ULG']}]}
 ];
 
 var columns=[
-  {head:'Marked',leader:{nm:'Arild Kaale',role:'Direkt\\u00f8r for Marked',email:'arild.kaale@vikingbad.no',groups:['LG','SUG','ULG']},reports:[
+  {head:'Marked',leader:{nm:'Arild Kaale',role:'Direktør for Marked',email:'arild.kaale@vikingbad.no',groups:['LG','SUG','ULG']},reports:[
     {nm:'Stine Veronica Bernander',ti:'Leder Marked',email:'stine@vikingbad.no',groups:['ULG'],children:[{nm:'Sona Appaiah',ti:'Merkevare- og webdesigner',email:'sona.appaiah@vikingbad.no',groups:[]},{nm:'Kaja Frigstad Skuggevik',ti:'Spesialist visuelt design',email:'kaja.skuggevik@vikingbad.no',groups:[]}]},
-    {nm:'Christer Bergene',ti:'Studioleder \\u00b7 Sandvika',email:'christer.bergene@vikingbad.no',groups:['ULG'],children:[{nm:'Emilie Gullvik',ti:'Baderomsdesigner',email:'emilie.gullvik@vikingbad.no',groups:[]},{nm:'Andrea Jensen',ti:'Baderomsdesigner',email:'andrea.jensen@vikingbad.no',groups:[]}]},
-    {nm:'Eivind Rasmussen',ti:'Studioleder \\u00b7 Grimstad',email:'eivind@vikingbad.no',groups:['ULG']}
+    {nm:'Christer Bergene',ti:'Studioleder · Sandvika',email:'christer.bergene@vikingbad.no',groups:['ULG'],children:[{nm:'Emilie Gullvik',ti:'Baderomsdesigner',email:'emilie.gullvik@vikingbad.no',groups:[]},{nm:'Andrea Jensen',ti:'Baderomsdesigner',email:'andrea.jensen@vikingbad.no',groups:[]}]},
+    {nm:'Eivind Rasmussen',ti:'Studioleder · Grimstad',email:'eivind@vikingbad.no',groups:['ULG']}
   ]},
-  {head:'Salg',leader:{nm:'Geir H\\u00e5kon Lindheim',role:'Leder Salg',email:'ghl@vikingbad.no',groups:['LG','SUG','ULG']},reports:[
+  {head:'Salg',leader:{nm:'Geir Håkon Lindheim',role:'Leder Salg',email:'ghl@vikingbad.no',groups:['LG','SUG','ULG']},reports:[
     {nm:'Marius Olsen',ti:'Teamleder Kundesenter',email:'marius@vikingbad.no',groups:['ULG'],children:[{nm:'Kundesenter',unitOnly:true}]},
-    {nm:'Teamleder RA',vacant:true,groups:['ULG'],children:[{nm:'RA',roster:['Carl Eric Wessel Holst','Irina Ellingsen','Tom Nyhagen','Tore M\\u00f8lbach Lunde-Olsen','Vegard Somdal','Per \\u00d8ivind Pedersen','Aleksander Torjussen']}]},
-    {nm:'S\\u00f8lve Marlon Str\\u00f8msland',ti:'Salg \\u00b7 Proff',email:'sms@vikingbad.no',groups:['ULG'],enhet:'Kunder\\u00e5dg. PROFF',children:[{nm:'Anette Hansen',ti:'Salg \\u00b7 Proff',groups:[]}]}
+    {nm:'Teamleder RA',vacant:true,groups:['ULG'],children:[{nm:'RA',roster:['Carl Eric Wessel Holst','Irina Ellingsen','Tom Nyhagen','Tore Mølbach Lunde-Olsen','Vegard Somdal','Per Øivind Pedersen','Aleksander Torjussen']}]},
+    {nm:'Sølve Marlon Strømsland',ti:'Salg · Proff',email:'sms@vikingbad.no',groups:['ULG'],enhet:'Kunderådg. PROFF',children:[{nm:'Anette Hansen',ti:'Salg · Proff',groups:[]}]}
   ]},
-  {head:'Sortimentsutvikling & Sourcing',leader:{nm:'Snorre Larstad',role:'Direkt\\u00f8r for Sortimentsutvikling og Sourcing',groups:['LG','SUG','DMG','ULG']},reports:[
+  {head:'Sortimentsutvikling & Sourcing',leader:{nm:'Snorre Larstad',role:'Direktør for Sortimentsutvikling og Sourcing',groups:['LG','SUG','DMG','ULG']},reports:[
     {nm:'Tom Patrich Josefsen',ti:'Leder for Produktutvikling',email:'tpj@vikingbad.no',groups:['LGF','SUG','DMG','ULG'],enhet:'Produkt'},
-    {nm:'Peder \\u00d8stmoe',ti:'Teamleder Teknisk kundeservice',email:'peder@vikingbad.no',groups:['DMG','ULG'],enhet:'Teknisk kundeservice'}
+    {nm:'Peder Østmoe',ti:'Teamleder Teknisk kundeservice',email:'peder@vikingbad.no',groups:['DMG','ULG'],enhet:'Teknisk kundeservice'}
   ]},
   {head:'Supply chain',leader:{nm:'Elisabeth Engler',role:'Leder for supply chain',groups:['LG','DMG','ULG']},reports:[
-    {nm:'Innkj\\u00f8p',unitOnly:true},
+    {nm:'Innkjøp',unitOnly:true},
     {nm:'Ansv. intern logistikk',vacant:true,groups:['DMG']},
     {nm:'Avd. leder Lager',vacant:true,groups:['DMG','ULG'],children:[{nm:'TL Lager',vacant:true,groups:[],enhet:'Lager'}]}
   ]}
@@ -250,7 +250,7 @@ function reportEl(r){
   if(r.unitOnly) return '<div class="report"><div class="card unit"><div class="tag">Enhet</div><div class="nm">'+r.nm+'</div></div></div>';
   if(r.roster) return '<div class="report"><div class="card"><div class="tag">Team</div><div class="nm">'+r.nm+'<span class="rcount">'+r.roster.length+'</span></div><ul class="roster-list">'+r.roster.map(function(n){return '<li>'+n+'</li>';}).join('')+'</ul></div></div>';
   var inner='<div class="card'+(r.vacant?' vacant':'')+'">';
-  if(r.vacant) inner+='<div class="rtag">Rolle \\u00b7 ubesatt</div>';
+  if(r.vacant) inner+='<div class="rtag">Rolle · ubesatt</div>';
   if(r.nm) inner+='<div class="nm">'+r.nm+'</div>';
   if(r.ti) inner+='<div class="ti">'+r.ti+'</div>';
   inner+=emailLine(r)+dots(r.groups);
@@ -278,7 +278,7 @@ function renderLegend(){
 function renderTree(){
   var t=document.getElementById('tree');
   var ceoHtml='<div class="ceo-zone"><div class="ceo"><div class="role-tag">'+ceo.tagName+'</div><div class="nm">'+ceo.nm+'</div><div class="ti">'+ceo.ti+'</div>'+emailLine(ceo)+dots(ceo.groups)+'</div><div class="v-line" style="height:20px"></div></div>';
-  var stabHtml='<div class="stab-branch" style="width:100%"><div class="stab"><div class="stab-head"><span class="k">Stab & st\\u00f8ttefunksjoner</span><span class="d">\\u2014 rapporterer til adm. dir.</span></div><div class="stab-grid">'+stab.map(function(s){return '<div class="card'+(s.ext?' ext':'')+'">'+( s.tag?'<div class="tag">'+s.tag+'</div>':'')+'<div class="nm">'+s.nm+'</div>'+(s.ti?'<div class="ti">'+s.ti+'</div>':'')+emailLine(s)+dots(s.groups)+((s.reports&&s.reports.length)?'<div class="stab-sub">'+s.reports.map(reportEl).join('')+'</div>':'')+'</div>';}).join('')+'</div></div><div class="v-line" style="height:22px"></div></div>';
+  var stabHtml='<div class="stab-branch" style="width:100%"><div class="stab"><div class="stab-head"><span class="k">Stab & støttefunksjoner</span><span class="d">— rapporterer til adm. dir.</span></div><div class="stab-grid">'+stab.map(function(s){return '<div class="card'+(s.ext?' ext':'')+'">'+( s.tag?'<div class="tag">'+s.tag+'</div>':'')+'<div class="nm">'+s.nm+'</div>'+(s.ti?'<div class="ti">'+s.ti+'</div>':'')+emailLine(s)+dots(s.groups)+((s.reports&&s.reports.length)?'<div class="stab-sub">'+s.reports.map(reportEl).join('')+'</div>':'')+'</div>';}).join('')+'</div></div><div class="v-line" style="height:22px"></div></div>';
   var colsHtml='<div class="columns">'+columns.map(function(c){return '<div class="col"><div class="col-head">'+c.head+'</div><div class="leader"><div class="nm">'+c.leader.nm+'</div>'+(c.leader.role?'<div class="ro">'+c.leader.role+'</div>':'')+emailLine(c.leader)+dots(c.leader.groups)+'</div><div class="rail">'+c.reports.map(reportEl).join('')+'</div></div>';}).join('')+'</div>';
   t.innerHTML=ceoHtml+stabHtml+'<div class="bus-wrap"><div class="bus"><div class="bus-line"></div><div class="bus-drops"><span></span><span></span><span></span><span></span></div></div>'+colsHtml+'</div>';
 }
