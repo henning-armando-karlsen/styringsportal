@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SUPABASE_ENABLED, loadAllPortals, savePortalContent } from './lib/dataSource';
 import AdminPanel, { checkIsAdmin } from './components/AdminPanel';
 import ProjectsView from './components/ProjectsView';
+import HomeView from './components/HomeView';
+import DirectoryView from './components/DirectoryView';
 import { supabase } from './lib/supabase.js';
 
 /* ===== ICONS (inline lucide-style SVGs) ===== */
@@ -648,8 +650,8 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
   const me = members.find(m => m.id === currentUserId);
   const sections = [
     { label: null, items: [
-      { key:'desk',       label:'Mitt skrivebord', icon:Home },
-      { key:'dashboard',  label:'Oversikt',        icon:LayoutDashboard },
+      { key:'home',       label:'Hjem',            icon:Home },
+      { key:'desk',       label:'Mitt skrivebord', icon:LayoutDashboard },
       { key:'crossorg',   label:'På tvers',        icon:Command, count:counts.crossorg },
     ]},
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
@@ -671,6 +673,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
     { label: 'Ressurser', items: [
       { key:'documents',   label:'Dokumenter',   icon:Folder,     count:counts.documents },
       { key:'team',        label:org.navTeam || 'Ledergruppen', icon:Users, count:counts.team },
+      { key:'directory',   label:'Avdelinger & medarbeidere', icon:UserCheck },
     ]},
     ...(showAdmin ? [{ label: 'System', items: [
       { key:'admin', label:'Admin', icon:ShieldAlert },
@@ -5688,7 +5691,7 @@ const LoginScreen = ({ leadershipMembers, marketingMembers, salesMembers, innkjo
 };
 
 /* ===== APP ===== */
-const App = () => {
+const App = ({ identity }) => {
   const [leadershipData, setLeadershipData] = useState(seedData);
   const [marketingData, setMarketingData]   = useState(seedMarketing);
   const [salesData, setSalesData]           = useState(seedSales);
@@ -5697,7 +5700,7 @@ const App = () => {
   const [crossorgData, setCrossorgData]     = useState({ projects: [] });
   const [currentUserId, setCurrentUserId]   = useState(null);
   const [activePortal, setActivePortal]     = useState(null);
-  const [view, setView] = useState('desk');
+  const [view, setView] = useState('home');
   const [focusMeetingId, setFocusMeetingId] = useState(null);
   const [focusChannelId, setFocusChannelId] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -5714,6 +5717,14 @@ const App = () => {
     checkIsAdmin().then(setIsAdminUser);
   }, []);
 
+  // Auto-identify from AuthGate identity (Supabase mode)
+  useEffect(() => {
+    if (!identity) return;
+    setCurrentUserId(identity.handle);
+    setActivePortal(identity.primaryPortal);
+    setIsAdminUser(identity.isAdmin);
+  }, [identity]);
+
   const loggedIn = !!currentUserId && !!activePortal;
   const stores = {
     leadership: [leadershipData, setLeadershipData],
@@ -5727,34 +5738,29 @@ const App = () => {
   const save = (newData) => { rawSave(newData); if (SUPABASE_ENABLED && activePortal) savePortalContent(activePortal, newData).catch(err => console.error('Supabase: lagring feilet', err)); };
   const saveCrossorg = (newData) => { setCrossorgData(newData); if (SUPABASE_ENABLED) savePortalContent('crossorg', newData).catch(err => console.error('Supabase: crossorg lagring feilet', err)); };
   const allData = { leadership:leadershipData, marketing:marketingData, sales:salesData, innkjop:innkjopData, produkt:produktData };
-  const availablePortals = currentUserId ? (portalAccess[currentUserId] || []) : [];
+  const availablePortals = identity ? identity.portals : (currentUserId ? (portalAccess[currentUserId] || []) : []);
 
   const resetTransient = () => { setSearchOpen(false); setAssistantOpen(false); setUserPickerOpen(false); setFocusMeetingId(null); setFocusChannelId(null); };
 
   const handleLogin = (userId, portalId) => {
-    // Tilgangsstyring: brukeren må eksplisitt ha tilgang til portalen
     if (!(portalAccess[userId] || []).includes(portalId)) return;
     setCurrentUserId(userId);
     setActivePortal(portalId);
-    setView('desk');
+    setView('home');
     resetTransient();
   };
   const handleLogout = () => {
-    setCurrentUserId(null); setActivePortal(null); setView('desk'); resetTransient();
+    setCurrentUserId(null); setActivePortal(null); setView('home'); resetTransient();
+    if (SUPABASE_ENABLED && supabase) supabase.auth.signOut();
   };
   const handleSwitchPortal = (pid) => {
-    if (!(portalAccess[currentUserId] || []).includes(pid)) return;
-    const targetData = (stores[pid] || stores.leadership)[0];
-    if (!targetData.members.some(m => m.id === currentUserId)) return;
+    if (!availablePortals.includes(pid)) return;
     setActivePortal(pid);
     setView('desk');
     resetTransient();
   };
-  // Naviger fra «På tvers» rett inn i en avdelings prosjekter (kun ved tilgang)
   const handleCrossNavigate = (pid) => {
-    if (!(portalAccess[currentUserId] || []).includes(pid)) return;
-    const targetData = (stores[pid] || stores.leadership)[0];
-    if (!targetData.members.some(m => m.id === currentUserId)) return;
+    if (!availablePortals.includes(pid)) return;
     setActivePortal(pid);
     setView('initiatives');
     resetTransient();
@@ -5780,8 +5786,8 @@ const App = () => {
     return () => window.removeEventListener('keydown', h);
   }, [currentUserId, activePortal]);
 
-  // Ikke innlogget → vis portalvelger med tilgangsstyring
-  if (!loggedIn) {
+  // Ikke innlogget → vis portalvelger (kun demo-modus når Supabase er av)
+  if (!loggedIn && !SUPABASE_ENABLED) {
     return <LoginScreen
       leadershipMembers={leadershipData.members}
       marketingMembers={marketingData.members}
@@ -5789,6 +5795,10 @@ const App = () => {
       innkjopMembers={innkjopData.members}
       produktMembers={produktData.members}
       onLogin={handleLogin}/>;
+  }
+  // I Supabase-modus: hvis identity ikke er lastet ennå, vis laster
+  if (!loggedIn && SUPABASE_ENABLED) {
+    return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:theme.bg,color:theme.inkSoft,fontFamily:'Manrope, system-ui, sans-serif'}}>Identifiserer ...</div>;
   }
 
   const deptProjects = (data.projects || []).filter(p=>p.status!=='fullført'&&p.status!=='avlyst');
@@ -5816,7 +5826,7 @@ const App = () => {
       <Sidebar
         active={view} onChange={handleNavigate} counts={counts}
         currentUserId={currentUserId} members={data.members}
-        onSwitchUser={()=>setUserPickerOpen(true)}
+        onSwitchUser={isAdminUser && !SUPABASE_ENABLED ? ()=>setUserPickerOpen(true) : null}
         onSearch={()=>setSearchOpen(true)}
         org={data.org}
         availablePortals={availablePortals}
@@ -5825,8 +5835,9 @@ const App = () => {
         onLogout={handleLogout}
         showAdmin={isAdminUser}/>
       <main style={{flex:1,padding:'40px 48px 80px',minWidth:0,maxWidth:1280,position:'relative'}}>
-        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData}/>}
-        {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate}/>}
+        {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity}/>}
+        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData}/>}
+        {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='dashboard'   && <Dashboard         data={data} onNavigate={handleNavigate} save={save}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
         {view==='initiatives' && <InitiativesView   data={data} save={save}/>}
@@ -5840,6 +5851,7 @@ const App = () => {
         {view==='messages'    && <MessagesView      data={data} save={save} currentUserId={currentUserId} focusChannelId={focusChannelId} onClearFocus={()=>setFocusChannelId(null)}/>}
         {view==='documents'   && <DocumentsView     data={data} save={save}/>}
         {view==='team'        && <TeamView          data={data} save={save}/>}
+        {view==='directory'   && <DirectoryView    allData={allData} currentUserId={currentUserId} isAdmin={isAdminUser}/>}
         {view==='admin'       && <AdminPanel/>}
       </main>
 
