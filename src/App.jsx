@@ -5,6 +5,7 @@ import AdminPanel, { checkIsAdmin } from './components/AdminPanel';
 import ProjectsView from './components/ProjectsView';
 import HomeView from './components/HomeView';
 import DirectoryView from './components/DirectoryView';
+import OrgChartView from './components/OrgChartView';
 import { supabase } from './lib/supabase.js';
 
 /* ===== ICONS (inline lucide-style SVGs) ===== */
@@ -66,6 +67,7 @@ const Hash = ico('<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="2
 const Reply = ico('<polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>');
 const AtSign = ico('<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>');
 const Smile = ico('<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>');
+const Network = ico('<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/>');
 const PinIcon = ico('<line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 2-2V3H6v1a2 2 0 0 0 2 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>');
 const ThumbsUp = ico('<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>');
 const Send2 = ico('<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>');
@@ -190,13 +192,17 @@ const seedData = () => {
       },
     },
     members: [
-      { id:'svk', name:'Stein Viggo Karlsen',    role:'CEO',                email:'svk@vikingbad.no',              initials:'SV' },
-      { id:'tm',  name:'Tonny Morewood',         role:'CIO',                email:'tonny@vikingbad.no',            initials:'TM' },
-      { id:'ak',  name:'Arild Kaale',            role:'CMO',                email:'arild.kaale@vikingbad.no',      initials:'AK' },
-      { id:'ghl', name:'Geir Håkon Lindhjem',    role:'Leder Salg',         email:'ghl@vikingbad.no',              initials:'GH' },
-      { id:'om',  name:'Ørjan Moi',              role:'Strategisk ressurs', email:'orjan@vikingbad.no',            initials:'ØM' },
-      { id:'sl',  name:'Snorre Larstad',         role:'CPO',                email:'snorre@vikingbad.no',           initials:'SL' },
-      { id:'ee',  name:'Elisabeth Engler',       role:'Leder Innkjøp',      email:'elisabeth.engler@vikingbad.no', initials:'EE' },
+      { id:'svk', name:'Stein Viggo Karlsen',    role:'Administrerende direktør / CEO', email:'svk@vikingbad.no', initials:'SK' },
+      { id:'tm',  name:'Tonny Morewood',         role:'Direktør for Teknologi og IKT / CIO', email:'tonny@vikingbad.no', initials:'TM' },
+      { id:'eh',  name:'Eirik Halvorsen',        role:'Systemutvikler IKT', email:'eh@vikingbad.no', initials:'EH' },
+      { id:'om',  name:'Ørjan Moy Jacobsen',     role:'Spesialist Analyse', email:'orjan@vikingbad.no', initials:'ØJ' },
+      { id:'henning', name:'Henning Karlsen',    role:'Strategi (ekstern rådgiver)', email:'henning@compete.no', initials:'HK' },
+      { id:'elh', name:'Espen Løvberg Hansen',   role:'Direktør Økonomi og Finans / CFO', email:'espen.lovberg.hansen@vikingbad.no', initials:'EH' },
+      { id:'hba', name:'Hanne Birkenes Aamlid',  role:'HR-leder', email:'hanne@vikingbad.no', initials:'HA' },
+      { id:'ak',  name:'Arild Kaale',            role:'Direktør for Marked', email:'arild.kaale@vikingbad.no', initials:'AK' },
+      { id:'ghl', name:'Geir Håkon Lindheim',    role:'Leder Salg', email:'ghl@vikingbad.no', initials:'GL' },
+      { id:'sl',  name:'Snorre Larstad',         role:'Direktør for Sortimentsutvikling og Sourcing', email:'', initials:'SL' },
+      { id:'ee',  name:'Elisabeth Engler',       role:'Leder for supply chain', email:'', initials:'EE' },
     ],
     meetings: [],
     decisions: [],
@@ -258,13 +264,14 @@ const seedMarketing = () => {
       },
     },
     members: [
-      { id:'ak', name:'Arild Kaale',       role:'Markedssjef',            email:'arild.kaale@vikingbad.no',  initials:'AK' },
-      { id:'ms', name:'Marte Sundby',      role:'Digital & performance',  email:'marte.sundby@vikingbad.no', initials:'MS' },
-      { id:'ht', name:'Henrik Tangen',     role:'Innhold & sosiale medier',email:'henrik.tangen@vikingbad.no',initials:'HT' },
-      { id:'is', name:'Ingrid Solheim',    role:'Merkevare & design',     email:'ingrid.solheim@vikingbad.no',initials:'IS' },
-      { id:'je', name:'Jonas Eriksen',     role:'Markedskoordinator',     email:'jonas.eriksen@vikingbad.no',initials:'JE' },
-      { id:'ka', name:'Kristine Aas',      role:'PR & kommunikasjon',     email:'kristine.aas@vikingbad.no', initials:'KA' },
-      { id:'sb', name:'Sofie Berg',        role:'Web & e-handel',         email:'sofie.berg@vikingbad.no',   initials:'SB' },
+      { id:'ak',  name:'Arild Kaale',              role:'Direktør for Marked', email:'arild.kaale@vikingbad.no', initials:'AK' },
+      { id:'svb', name:'Stine Veronica Bernander',  role:'Leder Marked', email:'stine@vikingbad.no', initials:'SB' },
+      { id:'sa',  name:'Sona Appaiah',              role:'Merkevare- og webdesigner', email:'sona.appaiah@vikingbad.no', initials:'SA' },
+      { id:'kfs', name:'Kaja Frigstad Skuggevik',   role:'Spesialist visuelt design', email:'kaja.skuggevik@vikingbad.no', initials:'KS' },
+      { id:'cb',  name:'Christer Bergene',          role:'Studioleder Sandvika', email:'christer.bergene@vikingbad.no', initials:'CB' },
+      { id:'eg',  name:'Emilie Gullvik',            role:'Baderomsdesigner', email:'emilie.gullvik@vikingbad.no', initials:'EG' },
+      { id:'aj',  name:'Andrea Jensen',             role:'Baderomsdesigner', email:'andrea.jensen@vikingbad.no', initials:'AJ' },
+      { id:'er',  name:'Eivind Rasmussen',          role:'Studioleder Grimstad', email:'eivind@vikingbad.no', initials:'ER' },
     ],
     meetings: [],
     decisions: [],
@@ -326,13 +333,17 @@ const seedSales = () => {
       },
     },
     members: [
-      { id:'ghl', name:'Geir Håkon Lindhjem', role:'Salgssjef',              email:'ghl@vikingbad.no',           initials:'GH' },
-      { id:'tb',  name:'Thomas Berg',         role:'Key Account Manager',    email:'thomas.berg@vikingbad.no',   initials:'TB' },
-      { id:'cn',  name:'Camilla Nguyen',      role:'Salgskonsulent Øst',     email:'camilla.nguyen@vikingbad.no',initials:'CN' },
-      { id:'ah',  name:'Anders Holt',         role:'Salgskonsulent Vest',    email:'anders.holt@vikingbad.no',   initials:'AH' },
-      { id:'lv',  name:'Lene Vik',            role:'Salgskonsulent Nord',    email:'lene.vik@vikingbad.no',      initials:'LV' },
-      { id:'ps',  name:'Pål Strand',          role:'Innesalg & ordre',       email:'pal.strand@vikingbad.no',    initials:'PS' },
-      { id:'md',  name:'Mona Dahl',           role:'Salgssupport',           email:'mona.dahl@vikingbad.no',     initials:'MD' },
+      { id:'ghl',  name:'Geir Håkon Lindheim',       role:'Leder Salg', email:'ghl@vikingbad.no', initials:'GL' },
+      { id:'mo',   name:'Marius Olsen',              role:'Teamleder Kundesenter', email:'marius@vikingbad.no', initials:'MO' },
+      { id:'sms',  name:'Sølve Marlon Strømsland',   role:'Salg Proff', email:'sms@vikingbad.no', initials:'SS' },
+      { id:'ah',   name:'Anette Hansen',             role:'Salg Proff', email:'', initials:'AH' },
+      { id:'cewh', name:'Carl Eric Wessel Holst',    role:'Salg · Reklamasjon (RA)', email:'', initials:'CH' },
+      { id:'ie',   name:'Irina Ellingsen',           role:'Salg · Reklamasjon (RA)', email:'', initials:'IE' },
+      { id:'tn',   name:'Tom Nyhagen',               role:'Salg · Reklamasjon (RA)', email:'', initials:'TN' },
+      { id:'tmlo', name:'Tore Mølbach Lunde-Olsen',  role:'Salg · Reklamasjon (RA)', email:'', initials:'TL' },
+      { id:'vs',   name:'Vegard Somdal',             role:'Salg · Reklamasjon (RA)', email:'', initials:'VS' },
+      { id:'pop',  name:'Per Øivind Pedersen',       role:'Salg · Reklamasjon (RA)', email:'', initials:'PP' },
+      { id:'at',   name:'Aleksander Torjussen',      role:'Salg · Reklamasjon (RA)', email:'', initials:'AT' },
     ],
     meetings: [],
     decisions: [],
@@ -379,13 +390,7 @@ const seedInnkjop = () => {
       },
     },
     members: [
-      { id:'ee', name:'Elisabeth Engler', role:'Innkjøpsleder',                email:'elisabeth.engler@vikingbad.no', initials:'EE' },
-      { id:'ho', name:'Hanne Os',         role:'Operativ innkjøper',           email:'hanne.os@vikingbad.no',         initials:'HO' },
-      { id:'rj', name:'Rune Jakobsen',    role:'Kategoriansvarlig komponenter',email:'rune.jakobsen@vikingbad.no',    initials:'RJ' },
-      { id:'ti', name:'Tone Iversen',     role:'Innkjøper emballasje & forbruk',email:'tone.iversen@vikingbad.no',    initials:'TI' },
-      { id:'bk', name:'Bjørn Krogh',      role:'Sourcing Manager',             email:'bjorn.krogh@vikingbad.no',      initials:'BK' },
-      { id:'sa', name:'Siri Aune',        role:'Innkjøpskoordinator',          email:'siri.aune@vikingbad.no',        initials:'SA' },
-      { id:'fm', name:'Fredrik Moen',     role:'Kontrakt & avtaler',           email:'fredrik.moen@vikingbad.no',     initials:'FM' },
+      { id:'ee', name:'Elisabeth Engler', role:'Leder for supply chain', email:'', initials:'EE' },
     ],
     meetings: [],
     decisions: [],
@@ -434,20 +439,9 @@ const seedProdukt = () => {
       },
     },
     members: [
-      { id:'sl', name:'Snorre Larstad',     role:'Produkt- & sourcingsjef',   email:'snorre@vikingbad.no',          initials:'SL' },
-      { id:'kw', name:'Kari Wold',          role:'Produktutvikler (R&D)',     email:'kari.wold@vikingbad.no',       initials:'KW' },
-      { id:'eo', name:'Erik Olsen',         role:'Industridesigner',          email:'erik.olsen@vikingbad.no',      initials:'EO' },
-      { id:'nh', name:'Nina Haug',          role:'Kategoriansvarlig dusj',    email:'nina.haug@vikingbad.no',       initials:'NH' },
-      { id:'tg', name:'Trond Gabrielsen',   role:'Kvalitet & test',           email:'trond.gabrielsen@vikingbad.no',initials:'TG' },
-      { id:'ml', name:'Mari Lund',          role:'Teknisk dokumentasjon',     email:'mari.lund@vikingbad.no',       initials:'ML' },
-      { id:'vs', name:'Vegard Sæther',      role:'Produktkoordinator',        email:'vegard.sather@vikingbad.no',   initials:'VS' },
-      { id:'bk', name:'Bjørn Krogh',        role:'Leder Sourcing',            email:'bjorn.krogh@vikingbad.no',     initials:'BK' },
-      { id:'gm', name:'Geir Madsen',        role:'Strategisk sourcing',       email:'geir.madsen@vikingbad.no',     initials:'GM' },
-      { id:'aw', name:'Astrid Wang',        role:'Leverandørrevisor',         email:'astrid.wang@vikingbad.no',     initials:'AW' },
-      { id:'dl', name:'Daniel Lie',         role:'Sourcing-analytiker',       email:'daniel.lie@vikingbad.no',      initials:'DL' },
-      { id:'yk', name:'Yusuf Karim',        role:'International sourcing (Asia)',email:'yusuf.karim@vikingbad.no',   initials:'YK' },
-      { id:'hb', name:'Heidi Borg',         role:'Bærekraft i leverandørkjede',email:'heidi.borg@vikingbad.no',     initials:'HB' },
-      { id:'pn', name:'Petter Nordahl',     role:'Sourcing-koordinator',      email:'petter.nordahl@vikingbad.no',  initials:'PN' },
+      { id:'sl',  name:'Snorre Larstad',       role:'Direktør for Sortimentsutvikling og Sourcing', email:'', initials:'SL' },
+      { id:'tpj', name:'Tom Patrich Josefsen', role:'Leder for Produktutvikling', email:'tpj@vikingbad.no', initials:'TJ' },
+      { id:'po',  name:'Peder Østmoe',        role:'Teamleder Teknisk kundeservice', email:'peder@vikingbad.no', initials:'PØ' },
     ],
     meetings: [],
     decisions: [],
@@ -466,20 +460,17 @@ const seedProdukt = () => {
 };
 
 /* ===== PORTALREGISTER & TILGANGSSTYRING ===== */
-/* Hvilke portaler hver person har tilgang til. Broer: CMO (ak)→marked, salgssjef (ghl)→salg,
-   innkjøpsleder (ee)→innkjøp, produktsjef (sl)→produkt&sourcing, sourcingleder (bk): innkjøp↔produkt&sourcing. */
 const portalAccess = {
-  svk:['leadership'], tm:['leadership'], om:['leadership'],
+  svk:['leadership'], tm:['leadership'], eh:['leadership'], om:['leadership'],
+  henning:['leadership','marketing','sales','innkjop','produkt'],
+  elh:['leadership'], hba:['leadership'],
   ak:['leadership','marketing'],
   ghl:['leadership','sales'],
   ee:['leadership','innkjop'],
   sl:['leadership','produkt'],
-  ms:['marketing'], ht:['marketing'], is:['marketing'], je:['marketing'], ka:['marketing'], sb:['marketing'],
-  tb:['sales'], cn:['sales'], ah:['sales'], lv:['sales'], ps:['sales'], md:['sales'],
-  ho:['innkjop'], rj:['innkjop'], ti:['innkjop'], sa:['innkjop'], fm:['innkjop'],
-  bk:['innkjop','produkt'],
-  kw:['produkt'], eo:['produkt'], nh:['produkt'], tg:['produkt'], ml:['produkt'], vs:['produkt'],
-  gm:['produkt'], aw:['produkt'], dl:['produkt'], yk:['produkt'], hb:['produkt'], pn:['produkt'],
+  svb:['marketing'], sa:['marketing'], kfs:['marketing'], cb:['marketing'], eg:['marketing'], aj:['marketing'], er:['marketing'],
+  mo:['sales'], sms:['sales'], ah:['sales'], cewh:['sales'], ie:['sales'], tn:['sales'], tmlo:['sales'], vs:['sales'], pop:['sales'], at:['sales'],
+  tpj:['produkt'], po:['produkt'],
 };
 const portalMeta = {
   leadership: { id:'leadership', name:'Ledergruppen',     subtitle:'Ledergruppeportal', desc:'Strategi, beslutninger og styring', icon:'shield',    restricted:true  },
@@ -739,6 +730,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       { key:'documents',   label:'Dokumenter',   icon:Folder,     count:counts.documents },
       { key:'team',        label:org.navTeam || 'Ledergruppen', icon:Users, count:counts.team },
       { key:'directory',   label:'Avdelinger & medarbeidere', icon:UserCheck },
+      ...(activePortal === 'leadership' ? [{ key:'orgchart', label:'Organisasjonskart', icon:Network }] : []),
     ]},
     ...(showAdmin ? [{ label: 'System', items: [
       { key:'admin', label:'Admin', icon:ShieldAlert },
@@ -5927,6 +5919,7 @@ const App = ({ identity }) => {
         {view==='documents'   && <DocumentsView     data={data} save={save}/>}
         {view==='team'        && <TeamView          data={data} save={save}/>}
         {view==='directory'   && <DirectoryView    allData={allData} currentUserId={currentUserId} isAdmin={isAdminUser}/>}
+        {view==='orgchart'   && <OrgChartView/>}
         {view==='admin'       && <AdminPanel/>}
       </main>
 
