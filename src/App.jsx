@@ -2179,7 +2179,7 @@ const TaskForm = ({ task, data, onSave, onCancel, onDelete }) => {
   );
 };
 
-const TasksView = ({ data, save, markedsplanTasks=[] }) => {
+const TasksView = ({ data, save, markedsplanTasks=[], sortimentTasks=[] }) => {
   const [editing,setEditing] = useState(null);
   const [filter,setFilter] = useState('open');
   const [ownerFilter,setOwnerFilter] = useState('all');
@@ -2219,6 +2219,17 @@ const TasksView = ({ data, save, markedsplanTasks=[] }) => {
             ))}
           </Card>
           <div style={{fontSize:12,color:theme.inkMuted,marginTop:8}}>Disse styres i Markedsplan-modulen og oppdateres automatisk.</div>
+        </div>
+      )}
+      {sortimentTasks.length > 0 && (
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:11,fontWeight:700,color:theme.inkSoft,letterSpacing:0.6,textTransform:'uppercase',marginBottom:8}}>Fra Sortimentsverktøyet</div>
+          <Card padded={false}>
+            {sortimentTasks.map(t => (
+              <TaskRow key={t.id} task={{...t, status: t.status === 'ikke_startet' ? 'planlagt' : t.status}} member={memberById(t.owner)}/>
+            ))}
+          </Card>
+          <div style={{fontSize:12,color:theme.inkMuted,marginTop:8}}>Disse styres i Sortimentsverktøyet og synkes automatisk.</div>
         </div>
       )}
       {filtered.length===0 ? (
@@ -4404,7 +4415,7 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
 };
 
 /* ===== MITT SKRIVEBORD ===== */
-const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allData={}, forumData={}, activePortal, onOpenForum, markedsplanTasks=[] }) => {
+const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allData={}, forumData={}, activePortal, onOpenForum, markedsplanTasks=[], sortimentTasks=[] }) => {
   const me = data.members.find(m => m.id === currentUserId);
   if (!me) {
     return <EmptyState icon={Users} title="Velg hvem du er pålogget som"
@@ -4413,7 +4424,7 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
 
   const memberById = (id) => data.members.find(m => m.id === id);
   const forumTasksList = Object.entries(forumData||{}).flatMap(([fid,fd])=>(fd.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført').map(t=>({...t,_forum:fid})));
-  const myTasks = [...data.tasks.filter(t => t.owner === me.id && t.status !== 'fullført'), ...forumTasksList, ...markedsplanTasks]
+  const myTasks = [...data.tasks.filter(t => t.owner === me.id && t.status !== 'fullført'), ...forumTasksList, ...markedsplanTasks, ...sortimentTasks]
     .sort((a,b) => (a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
   const overdueTasks = myTasks.filter(t => t.dueDate && daysFromNow(t.dueDate) < 0);
   const myMeetings = data.meetings.filter(m =>
@@ -4569,7 +4580,10 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
           <div>
             {myTasks.length === 0 ? (
               <div style={{padding:30,textAlign:'center',color:theme.inkMuted,fontSize:14}}>Du har ingen åpne oppgaver 🎉</div>
-            ) : myTasks.slice(0,6).map(task => task.source === 'markedsplan' ? (
+            ) : myTasks.slice(0,6).map(task => task.source === 'sortiment' ? (
+              <TaskRow key={task.id} task={{...task, status: task.status === 'ikke_startet' ? 'planlagt' : task.status}} member={memberById(task.owner)} compact
+                onToggle={()=> task.link && window.open(task.link, '_blank')}/>
+            ) : task.source === 'markedsplan' ? (
               <TaskRow key={task.id} task={{...task, status: task.status === 'ikke_startet' ? 'planlagt' : task.status}} member={memberById(task.owner)} compact
                 onToggle={()=>onNavigate('markedsplan')}/>
             ) : (
@@ -5774,6 +5788,7 @@ const App = ({ identity }) => {
   const [produktData, setProduktData]       = useState(seedProdukt);
   const [crossorgData, setCrossorgData]     = useState({ projects: [] });
   const [markedsplanData, setMarkedsplanData] = useState({});
+  const [sortimentData, setSortimentData] = useState({});
   const [currentUserId, setCurrentUserId]   = useState(null);
   const [activePortal, setActivePortal]     = useState(null);
   const [view, setView] = useState('home');
@@ -5793,9 +5808,9 @@ const App = ({ identity }) => {
   useEffect(() => {
     if (!SUPABASE_ENABLED) return;
     const forumSeeds = {}; FORUM_IDS.forEach(fid => { forumSeeds[fid] = emptyForumData(fid); });
-    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), crossorg: { projects: [] }, markedsplan: {}, ...forumSeeds })
+    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), crossorg: { projects: [] }, markedsplan: {}, sortiment: {}, ...forumSeeds })
       .then(all => {
-        setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.crossorg) setCrossorgData(all.crossorg); if(all.markedsplan) setMarkedsplanData(all.markedsplan);
+        setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.crossorg) setCrossorgData(all.crossorg); if(all.markedsplan) setMarkedsplanData(all.markedsplan); if(all.sortiment) setSortimentData(all.sortiment);
         const fd = {}; FORUM_IDS.forEach(fid => { if(all[fid]) fd[fid] = all[fid]; }); setForumData(fd);
       })
       .catch(err => console.error('Supabase: lasting feilet', err));
@@ -5880,6 +5895,28 @@ const App = ({ identity }) => {
     );
     return out.sort((a, b) => a.name.localeCompare(b.name, 'no'));
   }, [allData]);
+
+  const SORT_VALID_STATUS = ['ikke_startet', 'pågår', 'fullført'];
+  const resolveByEmail = (email) => {
+    if (!email) return null;
+    const n = String(email).trim().toLowerCase();
+    for (const pid of Object.keys(allData)) {
+      const m = (allData[pid].members || []).find(mm => (mm.email || '').trim().toLowerCase() === n);
+      if (m) return m.id;
+    }
+    return null;
+  };
+  const sortimentAssignments = useMemo(() => {
+    const items = (sortimentData && sortimentData.items) || [];
+    return items.map(it => ({
+      id: it.external_id, external_id: it.external_id, title: it.title,
+      owner: resolveByEmail(it.assignee_email) || resolveMemberId(it.assignee_name),
+      ownerName: it.assignee_name || it.assignee_email || '',
+      status: SORT_VALID_STATUS.includes(it.status) ? it.status : 'ikke_startet',
+      dueDate: it.due || '', priority: 'medium', source: 'sortiment',
+      sortType: it.type, link: it.link || '',
+    }));
+  }, [sortimentData, allData]);
 
   const handlePushToPortal = async (items) => {
     if (!SUPABASE_ENABLED) return { ok: true, mode: 'dry-run', count: (items || []).length };
@@ -6010,7 +6047,7 @@ const App = ({ identity }) => {
         forumData={forumData}/>
       <main style={{flex:1,padding:'40px 48px 80px',minWidth:0,maxWidth:1280,position:'relative'}}>
         {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity} forumData={forumData} onOpenForum={handleOpenForum}/>}
-        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
+        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')} sortimentTasks={sortimentAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
         {view==='markedsplan' && <MarkedsplanView data={markedsplanData} onChange={saveMarkedsplan} onPushToPortal={handlePushToPortal} members={markedsplanMembers} embedded={true}/>}
@@ -6021,7 +6058,7 @@ const App = ({ identity }) => {
         {view==='meetings'    && <MeetingsView      data={data} save={save} focusMeetingId={focusMeetingId} onClearFocus={()=>setFocusMeetingId(null)} currentUserId={currentUserId}/>}
         {view==='proposals'   && <ProposalsView     data={data} save={save} currentUserId={currentUserId}/>}
         {view==='decisions'   && <DecisionsView     data={data} save={save}/>}
-        {view==='tasks'       && <TasksView         data={data} save={save} markedsplanTasks={markedsplanAssignments.filter(a => a.owner && (data.members||[]).some(m => m.id === a.owner))}/>}
+        {view==='tasks'       && <TasksView         data={data} save={save} markedsplanTasks={markedsplanAssignments.filter(a => a.owner && (data.members||[]).some(m => m.id === a.owner))} sortimentTasks={sortimentAssignments.filter(a => a.owner && (data.members||[]).some(m => m.id === a.owner))}/>}
         {view==='messages'    && <MessagesView      data={data} save={save} currentUserId={currentUserId} focusChannelId={focusChannelId} onClearFocus={()=>setFocusChannelId(null)}/>}
         {view==='documents'   && <DocumentsView     data={data} save={save}/>}
         {view==='team'        && <TeamView          data={data} save={save}/>}

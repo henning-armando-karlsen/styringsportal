@@ -23,40 +23,44 @@
 //   kilde: 'sortiment'
 // }
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, x-ingest-secret',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey, x-ingest-secret',
 };
 const json = (obj: unknown, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
-  if (req.method !== 'POST') return json({ error: 'Bruk POST' }, 405);
+  try {
+    if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors });
+    if (req.method !== 'POST') return json({ error: 'Bruk POST' }, 405);
 
-  const secret = Deno.env.get('SORTIMENT_INGEST_SECRET');
-  if (!secret || req.headers.get('x-ingest-secret') !== secret) {
-    return json({ error: 'Ugyldig eller manglende hemmelighet' }, 401);
+    const secret = Deno.env.get('SORTIMENT_INGEST_SECRET');
+    if (!secret || req.headers.get('x-ingest-secret') !== secret) {
+      return json({ error: 'Ugyldig eller manglende hemmelighet' }, 401);
+    }
+
+    let body: any;
+    try { body = await req.json(); } catch { body = {}; }
+    const items = Array.isArray(body?.items) ? body.items : null;
+    if (!items) return json({ error: 'Mangler items[]' }, 400);
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    const content = { items, synced_at: new Date().toISOString() };
+    const { error } = await supabase
+      .from('portal_state')
+      .upsert({ portal_id: 'sortiment', content, updated_at: new Date().toISOString() }, { onConflict: 'portal_id' });
+
+    if (error) return json({ error: error.message }, 500);
+    return json({ ok: true, count: items.length });
+  } catch (err) {
+    return json({ error: (err as Error).message || 'Ukjent feil' }, 500);
   }
-
-  let body: any;
-  try { body = await req.json(); } catch { body = {}; }
-  const items = Array.isArray(body?.items) ? body.items : null;
-  if (!items) return json({ error: 'Mangler items[]' }, 400);
-
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  );
-
-  const content = { items, synced_at: new Date().toISOString() };
-  const { error } = await supabase
-    .from('portal_state')
-    .upsert({ portal_id: 'sortiment', content, updated_at: new Date().toISOString() }, { onConflict: 'portal_id' });
-
-  if (error) return json({ error: error.message }, 500);
-  return json({ ok: true, count: items.length });
 });
