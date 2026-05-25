@@ -5873,6 +5873,14 @@ const App = ({ identity }) => {
     }));
   }, [markedsplanData, allData]);
 
+  const markedsplanMembers = useMemo(() => {
+    const seen = {}, out = [];
+    ['marketing', 'sales', 'leadership'].forEach(pid =>
+      (allData[pid]?.members || []).forEach(m => { if (!seen[m.id]) { seen[m.id] = 1; out.push({ id: m.id, name: m.name }); } })
+    );
+    return out.sort((a, b) => a.name.localeCompare(b.name, 'no'));
+  }, [allData]);
+
   const handlePushToPortal = async (items) => {
     if (!SUPABASE_ENABLED) return { ok: true, mode: 'dry-run', count: (items || []).length };
     return { ok: true, mode: 'live', count: (items || []).length };
@@ -6005,7 +6013,7 @@ const App = ({ identity }) => {
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
-        {view==='markedsplan' && <MarkedsplanView data={markedsplanData} onChange={saveMarkedsplan} onPushToPortal={handlePushToPortal} embedded={true}/>}
+        {view==='markedsplan' && <MarkedsplanView data={markedsplanData} onChange={saveMarkedsplan} onPushToPortal={handlePushToPortal} members={markedsplanMembers} embedded={true}/>}
         {view==='initiatives' && <InitiativesView   data={data} save={save}/>}
         {view==='projects'    && <ProjectsView      data={data} save={save} crossorgData={crossorgData} saveCrossorg={saveCrossorg} allData={allData} currentUserId={currentUserId} activePortal={activePortal}/>}
         {view==='kpis'        && <KpisView          data={data} save={save}/>}
