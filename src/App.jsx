@@ -645,6 +645,69 @@ const FilterTabs = ({ value, onChange, options }) => (
   </div>
 );
 
+/* ===== PORTAL SWITCHER (dropdown for 4+, pill row for 2-3) ===== */
+const portalNav = (pid) => ({ leadership:{Icon:ShieldAlert,label:'Ledelse'}, marketing:{Icon:Megaphone,label:'Marked'}, sales:{Icon:TrendingUp,label:'Salg'}, innkjop:{Icon:ClipboardList,label:'Innkjøp'}, produkt:{Icon:Compass,label:'Produkt'} }[pid] || {Icon:LayoutDashboard,label:portalMeta[pid]?.name||pid});
+
+const PortalSwitcher = ({ availablePortals, activePortal, onSwitchPortal }) => {
+  const [dropOpen, setDropOpen] = useState(false);
+  const useDropdown = availablePortals.length > 3;
+
+  if (useDropdown) {
+    const activeNav = portalNav(activePortal);
+    const ActiveIcon = activeNav.Icon;
+    return (
+      <div style={{padding:'12px 14px 0',position:'relative'}}>
+        <button onClick={()=>setDropOpen(!dropOpen)}
+          style={{display:'flex',alignItems:'center',gap:8,width:'100%',padding:'9px 12px',borderRadius:8,background:'rgba(0,0,0,0.18)',border:'1px solid rgba(184,137,59,0.15)',cursor:'pointer',fontFamily:'inherit',color:'#fff',fontSize:12,fontWeight:600,transition:'all 120ms'}}
+          onMouseEnter={(e)=>e.currentTarget.style.background='rgba(0,0,0,0.28)'}
+          onMouseLeave={(e)=>e.currentTarget.style.background='rgba(0,0,0,0.18)'}>
+          <ActiveIcon size={14} style={{color:theme.brass}}/>
+          <span style={{flex:1,textAlign:'left'}}>{activeNav.label}</span>
+          <ChevronRight size={12} style={{color:'#A89978',transform:dropOpen?'rotate(90deg)':'rotate(0deg)',transition:'transform 150ms'}}/>
+        </button>
+        {dropOpen && (
+          <div style={{position:'absolute',top:'100%',left:14,right:14,marginTop:4,background:'#1F1F1F',borderRadius:8,border:'1px solid rgba(184,137,59,0.2)',boxShadow:'0 8px 24px rgba(0,0,0,0.4)',zIndex:100,overflow:'hidden'}}>
+            {availablePortals.filter(pid=>pid!==activePortal).map(pid => {
+              const nav = portalNav(pid);
+              const NavIcon = nav.Icon;
+              return (
+                <button key={pid} onClick={()=>{onSwitchPortal?.(pid);setDropOpen(false);}}
+                  style={{display:'flex',alignItems:'center',gap:8,width:'100%',padding:'10px 12px',border:'none',background:'transparent',color:'#C8BB99',cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:500,transition:'all 100ms'}}
+                  onMouseEnter={(e)=>{e.currentTarget.style.background='rgba(184,137,59,0.12)';e.currentTarget.style.color='#fff';}}
+                  onMouseLeave={(e)=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='#C8BB99';}}>
+                  <NavIcon size={13}/>{nav.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{padding:'12px 14px 0'}}>
+      <div style={{display:'flex',flexWrap:'wrap',gap:4,background:'rgba(0,0,0,0.18)',borderRadius:9,padding:4}}>
+        {availablePortals.map(pid => {
+          const isOn = pid === activePortal;
+          const nav = portalNav(pid);
+          const NavIcon = nav.Icon;
+          return (
+            <button key={pid} onClick={()=>{ if(!isOn) onSwitchPortal?.(pid); }}
+              style={{flex:'1 1 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:5,padding:'7px 8px',borderRadius:6,
+                background:isOn?theme.brass:'transparent',color:isOn?'#fff':'#C8BB99',
+                border:'none',cursor:isOn?'default':'pointer',fontFamily:'inherit',fontSize:11,fontWeight:700,letterSpacing:0.2,transition:'all 120ms',whiteSpace:'nowrap'}}
+              onMouseEnter={(e)=>{ if(!isOn) e.currentTarget.style.background='rgba(184,137,59,0.18)'; }}
+              onMouseLeave={(e)=>{ if(!isOn) e.currentTarget.style.background='transparent'; }}>
+              <NavIcon size={12}/>{nav.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 /* ===== SIDEBAR ===== */
 const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUser, onSearch, org={}, availablePortals=[], activePortal, onSwitchPortal, onLogout, showAdmin, identity }) => {
   const me = members.find(m => m.id === currentUserId);
@@ -693,26 +756,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
 
       {/* Portalbytter – kun for de som har tilgang til flere portaler */}
       {canSwitch && (
-        <div style={{padding:'12px 14px 0'}}>
-          <div style={{display:'flex',gap:6,background:'rgba(0,0,0,0.18)',borderRadius:9,padding:4}}>
-            {availablePortals.map(pid => {
-              const isOn = pid === activePortal;
-              const nav = { leadership:{Icon:ShieldAlert,label:'Ledelse'}, marketing:{Icon:Megaphone,label:'Marked'}, sales:{Icon:TrendingUp,label:'Salg'}, innkjop:{Icon:ClipboardList,label:'Innkjøp'}, produkt:{Icon:Compass,label:'Produkt'} }[pid] || {Icon:LayoutDashboard,label:portalMeta[pid]?.name||pid};
-              const NavIcon = nav.Icon;
-              return (
-                <button key={pid} onClick={()=>{ if(!isOn) onSwitchPortal?.(pid); }}
-                  style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'7px 6px',borderRadius:6,
-                    background:isOn?theme.brass:'transparent',color:isOn?'#fff':'#C8BB99',
-                    border:'none',cursor:isOn?'default':'pointer',fontFamily:'inherit',fontSize:11.5,fontWeight:700,letterSpacing:0.2,transition:'all 120ms'}}
-                  onMouseEnter={(e)=>{ if(!isOn) e.currentTarget.style.background='rgba(184,137,59,0.18)'; }}
-                  onMouseLeave={(e)=>{ if(!isOn) e.currentTarget.style.background='transparent'; }}>
-                  <NavIcon size={13}/>
-                  {nav.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <PortalSwitcher availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={onSwitchPortal}/>
       )}
 
       {/* Brukerinfo */}
