@@ -127,6 +127,21 @@ const proposalCategoryColor = (c) => ({
   informasjon:{bg:theme.sageLight,fg:theme.sage},
 }[c] || {bg:theme.surfaceAlt,fg:theme.inkSoft});
 
+/* Beslutningsnivå (saksnivå B) */
+const decisionLevelLabels = { linje:'B0 · Linje', forum:'B1 · Forum', lg:'B2 · LG', styre:'B3 · Eier/styre' };
+const decisionLevelDesc = {
+  linje:'B0 · Linje/avdeling – lederen beslutter selv',
+  forum:'B1 · Forum (DMG/SUG/LGF) – operativ/faglig koordinering',
+  lg:'B2 · LG – tverrgående strategi, ressurser, prinsipp',
+  styre:'B3 · Eier/styre – over LGs mandat; LG innstiller',
+};
+const decisionLevelColor = (l) => ({
+  lg:{bg:theme.brassLight,fg:theme.brassDark},
+  styre:{bg:theme.rustLight,fg:theme.rust},
+  forum:{bg:'#E0E5EB',fg:theme.navy},
+  linje:{bg:theme.surfaceAlt,fg:theme.inkSoft},
+}[l] || {bg:theme.brassLight,fg:theme.brassDark});
+
 /* Relativ tid for chat-meldinger */
 const fmtRelativeTime = (iso) => {
   if (!iso) return '';
@@ -1004,12 +1019,15 @@ const MeetingCard = ({ meeting, data, onClick }) => {
 
 /* ===== MEETING FORM ===== */
 const meetingTemplates = {
-  ukentlig: { type:'Ukentlig', duration:60, agenda:[
-    { title:'Statusrunde – nøkkeltall', duration:10 },
-    { title:'Hovedsak (uken)', duration:25 },
-    { title:'Risikoer / blokkeringer', duration:10 },
-    { title:'Beslutninger som trengs', duration:10 },
-    { title:'Eventuelt', duration:5 },
+  ukentlig: { type:'Ukentlig', duration:65, agenda:[
+    { title:'Godkjenning av agenda + vedtakslogg', duration:5 },
+    { title:'Statusrunde – nøkkeltall (KPI-puls)', duration:10 },
+    { title:'Oppfølging – åpne vedtak og oppgaver', duration:10 },
+    { title:'Diskusjonssaker', duration:15 },
+    { title:'Beslutningssaker', duration:10 },
+    { title:'Orienteringer', duration:5 },
+    { title:'Risiko / blokkeringer', duration:5 },
+    { title:'Eventuelt + neste møte', duration:5 },
   ]},
   strategi: { type:'Strategi', duration:180, agenda:[
     { title:'Ramme og mål for møtet', duration:15 },
@@ -2446,6 +2464,7 @@ const AgendaProposalForm = ({ proposal, data, defaultMeetingId, defaultProposer,
     meetingId: defaultMeetingId || null,
     desiredDuration: 15,
     category: 'diskusjon',
+    decisionLevel: 'lg',
     priority: 'medium',
     status: 'foreslått',
     notes:'',
@@ -2482,6 +2501,17 @@ const AgendaProposalForm = ({ proposal, data, defaultMeetingId, defaultProposer,
           {value:'medium',label:'Medium – ordinær'},
           {value:'lav',label:'Lav – når det passer'},
         ]}/>
+      </div>
+
+      <Sel label="Beslutningsnivå – hvor saken avgjøres" value={p.decisionLevel||'lg'} onChange={(v)=>setP({...p,decisionLevel:v})} required options={[
+        {value:'linje',label:decisionLevelDesc.linje},
+        {value:'forum',label:decisionLevelDesc.forum},
+        {value:'lg',label:decisionLevelDesc.lg},
+        {value:'styre',label:decisionLevelDesc.styre},
+      ]}/>
+      <div style={{fontSize:12,color:theme.inkMuted,marginTop:-8,marginBottom:14,paddingLeft:2,lineHeight:1.5}}>
+        {decisionLevelDesc[p.decisionLevel||'lg']}
+        {(p.decisionLevel||'lg') !== 'lg' && <span style={{color:theme.amber,fontWeight:500}}> — vurder om saken heller bør behandles der før den løftes til ledergruppen.</span>}
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
@@ -2540,6 +2570,7 @@ const AgendaProposalCard = ({ proposal, data, onEdit, onAccept, onReject, onPost
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:8,flexWrap:'wrap'}}>
             <Pill bg={cc.bg} color={cc.fg}>{proposalCategoryLabels[proposal.category]||proposal.category}</Pill>
+            {(() => { const dl = decisionLevelColor(proposal.decisionLevel||'lg'); return <Pill bg={dl.bg} color={dl.fg}>{decisionLevelLabels[proposal.decisionLevel||'lg']}</Pill>; })()}
             <Pill bg={sc.bg} color={sc.fg}>{statusLabels[proposal.status]||proposal.status}</Pill>
             {proposal.priority === 'høy' && (
               <Pill bg={theme.rustLight} color={theme.rust}>⚡ Haster</Pill>
