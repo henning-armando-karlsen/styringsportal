@@ -6108,7 +6108,7 @@ const App = ({ identity }) => {
           />
         )}
         {view==='initiatives' && <InitiativesView   data={data} save={save}/>}
-        {view==='projects'    && <ProjectsView      data={data} save={save} crossorgData={crossorgData} saveCrossorg={saveCrossorg} allData={allData} currentUserId={currentUserId} activePortal={activePortal}/>}
+        {view==='projects'    && <ProjectsView      data={data} save={save} crossorgData={crossorgData} saveCrossorg={saveCrossorg} allData={allData} currentUserId={currentUserId} activePortal={activePortal} onNavigate={handleNavigate}/>}
         {view==='kpis'        && <KpisView          data={data} save={save}/>}
         {view==='risks'       && <RisksView         data={data} save={save}/>}
         {view==='meetings'    && <MeetingsView      data={data} save={save} focusMeetingId={focusMeetingId} onClearFocus={()=>setFocusMeetingId(null)} currentUserId={currentUserId}/>}
