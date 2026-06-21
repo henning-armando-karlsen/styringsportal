@@ -746,6 +746,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
   const sections = [
     { label: null, items: [
       { key:'home',       label:'Hjem',            icon:Home },
+      { key:'integrasjoner', label:'E-post og kalender', icon:Mail },
       { key:'innboks',    label:'Innboks',         icon:Bell, count:counts.innboks },
       { key:'desk',       label:'Mitt skrivebord', icon:LayoutDashboard },
       { key:'flyt',       label:'Flyt & kontroll', icon:Activity, count:counts.flyt },
@@ -776,7 +777,6 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       { key:'documents',   label:'Dokumenter',   icon:Folder,     count:counts.documents },
       { key:'team',        label:org.navTeam || 'Ledergruppen', icon:Users, count:counts.team },
       { key:'directory',   label:'Avdelinger & medarbeidere', icon:UserCheck },
-      { key:'integrasjoner', label:'Integrasjoner', icon:Mail },
       ...(activePortal === 'leadership' ? [{ key:'orgchart', label:'Organisasjonskart', icon:Network }] : []),
     ]},
     ...(showAdmin ? [{ label: 'System', items: [
@@ -4494,7 +4494,7 @@ const IntegrationsView = ({ userName }) => {
   );
   return (
     <div>
-      <SectionHeading overline="Tilkoblinger" title="Integrasjoner"/>
+      <SectionHeading overline="Tilkoblinger" title="E-post og kalender"/>
 
       <Card style={{marginBottom:22,background:theme.amberLight,border:`1px solid ${theme.amber}`}}>
         <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
