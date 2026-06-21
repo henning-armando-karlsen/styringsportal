@@ -6118,6 +6118,16 @@ const App = ({ identity }) => {
     return () => window.removeEventListener('keydown', h);
   }, [currentUserId, activePortal]);
 
+  const coherenceItems = useMemo(
+    () => collectOwnership({ allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments }),
+    [allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments]
+  );
+  const unifiedMyWork = useMemo(() => myWork(coherenceItems, currentUserId), [coherenceItems, currentUserId]);
+  const orgLooseEnds = useMemo(
+    () => looseEnds(coherenceItems, globalMemberIds(allData, forumData)),
+    [coherenceItems, allData, forumData]
+  );
+
   // Ikke innlogget → vis portalvelger (kun demo-modus når Supabase er av)
   if (!loggedIn && !SUPABASE_ENABLED) {
     return <LoginScreen
@@ -6136,16 +6146,6 @@ const App = ({ identity }) => {
   const deptProjects = (data.projects || []).filter(p=>p.status!=='fullført'&&p.status!=='avlyst');
   const crossProjects = (crossorgData.projects || []).filter(p=>p.status!=='fullført'&&p.status!=='avlyst');
   const myProjectCount = [...deptProjects, ...crossProjects].filter(p => p.lead===currentUserId || (p.members||[]).some(m=>m.memberId===currentUserId)).length;
-
-  const coherenceItems = useMemo(
-    () => collectOwnership({ allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments }),
-    [allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments]
-  );
-  const unifiedMyWork = useMemo(() => myWork(coherenceItems, currentUserId), [coherenceItems, currentUserId]);
-  const orgLooseEnds = useMemo(
-    () => looseEnds(coherenceItems, globalMemberIds(allData, forumData)),
-    [coherenceItems, allData, forumData]
-  );
 
   const counts = {
     meetings: data.meetings.filter(m=>m.status==='planlagt'&&daysFromNow(m.date)>=0).length,
