@@ -212,15 +212,15 @@ const seedData = () => {
       },
     },
     members: [
-      { id:'svk', name:'Stein Viggo Karlsen',    role:'Administrerende direktør / CEO', email:'svk@vikingbad.no', initials:'SK' },
+      { id:'svk', name:'Stein Viggo Karlsen',    role:'Administrerende direktør / CEO', email:'svk@vikingbad.no', initials:'SVK' },
       { id:'tm',  name:'Tonny Morewood',         role:'Direktør for Teknologi og IKT / CIO', email:'tonny@vikingbad.no', initials:'TM' },
       { id:'eh',  name:'Eirik Halvorsen',        role:'Systemutvikler IKT', email:'eh@vikingbad.no', initials:'EH' },
-      { id:'om',  name:'Ørjan Moy Jacobsen',     role:'Spesialist Analyse', email:'orjan@vikingbad.no', initials:'ØJ' },
+      { id:'om',  name:'Ørjan Moy Jacobsen',     role:'Spesialist Analyse', email:'orjan@vikingbad.no', initials:'ØMJ' },
       { id:'henning', name:'Henning Karlsen',    role:'Strategi (ekstern rådgiver)', email:'henning@compete.no', initials:'HK' },
-      { id:'elh', name:'Espen Løvberg Hansen',   role:'Direktør Økonomi og Finans / CFO', email:'espen.lovberg.hansen@vikingbad.no', initials:'EH' },
-      { id:'hba', name:'Hanne Birkenes Aamlid',  role:'HR-leder', email:'hanne@vikingbad.no', initials:'HA' },
+      { id:'elh', name:'Espen Løvberg Hansen',   role:'Direktør Økonomi og Finans / CFO', email:'espen.lovberg.hansen@vikingbad.no', initials:'ELH' },
+      { id:'hba', name:'Hanne Birkenes Aamlid',  role:'HR-leder', email:'hanne@vikingbad.no', initials:'HBA' },
       { id:'ak',  name:'Arild Kaale',            role:'Direktør for Marked', email:'arild.kaale@vikingbad.no', initials:'AK' },
-      { id:'ghl', name:'Geir Håkon Lindheim',    role:'Leder Salg', email:'ghl@vikingbad.no', initials:'GL' },
+      { id:'ghl', name:'Geir Håkon Lindheim',    role:'Leder Salg', email:'ghl@vikingbad.no', initials:'GHL' },
       { id:'sl',  name:'Snorre Larstad',         role:'Direktør for Sortimentsutvikling og Sourcing', email:'', initials:'SL' },
       { id:'ee',  name:'Elisabeth Engler',       role:'Leder for supply chain', email:'', initials:'EE' },
     ],
@@ -285,9 +285,9 @@ const seedMarketing = () => {
     },
     members: [
       { id:'ak',  name:'Arild Kaale',              role:'Direktør for Marked', email:'arild.kaale@vikingbad.no', initials:'AK' },
-      { id:'svb', name:'Stine Veronica Bernander',  role:'Leder Marked', email:'stine@vikingbad.no', initials:'SB' },
+      { id:'svb', name:'Stine Veronica Bernander',  role:'Leder Marked', email:'stine@vikingbad.no', initials:'SVB' },
       { id:'sa',  name:'Sona Appaiah',              role:'Merkevare- og webdesigner', email:'sona.appaiah@vikingbad.no', initials:'SA' },
-      { id:'kfs', name:'Kaja Frigstad Skuggevik',   role:'Spesialist visuelt design', email:'kaja.skuggevik@vikingbad.no', initials:'KS' },
+      { id:'kfs', name:'Kaja Frigstad Skuggevik',   role:'Spesialist visuelt design', email:'kaja.skuggevik@vikingbad.no', initials:'KFS' },
       { id:'cb',  name:'Christer Bergene',          role:'Studioleder Sandvika', email:'christer.bergene@vikingbad.no', initials:'CB' },
       { id:'eg',  name:'Emilie Gullvik',            role:'Baderomsdesigner', email:'emilie.gullvik@vikingbad.no', initials:'EG' },
       { id:'aj',  name:'Andrea Jensen',             role:'Baderomsdesigner', email:'andrea.jensen@vikingbad.no', initials:'AJ' },
@@ -353,16 +353,16 @@ const seedSales = () => {
       },
     },
     members: [
-      { id:'ghl',  name:'Geir Håkon Lindheim',       role:'Leder Salg', email:'ghl@vikingbad.no', initials:'GL' },
+      { id:'ghl',  name:'Geir Håkon Lindheim',       role:'Leder Salg', email:'ghl@vikingbad.no', initials:'GHL' },
       { id:'mo',   name:'Marius Olsen',              role:'Teamleder Kundesenter', email:'marius@vikingbad.no', initials:'MO' },
-      { id:'sms',  name:'Sølve Marlon Strømsland',   role:'Salg Proff', email:'sms@vikingbad.no', initials:'SS' },
+      { id:'sms',  name:'Sølve Marlon Strømsland',   role:'Salg Proff', email:'sms@vikingbad.no', initials:'SMS' },
       { id:'ah',   name:'Anette Hansen',             role:'Salg Proff', email:'', initials:'AH' },
       { id:'cewh', name:'Carl Eric Wessel Holst',    role:'Salg · Reklamasjon (RA)', email:'', initials:'CH' },
       { id:'ie',   name:'Irina Ellingsen',           role:'Salg · Reklamasjon (RA)', email:'', initials:'IE' },
       { id:'tn',   name:'Tom Nyhagen',               role:'Salg · Reklamasjon (RA)', email:'', initials:'TN' },
       { id:'tmlo', name:'Tore Mølbach Lunde-Olsen',  role:'Salg · Reklamasjon (RA)', email:'', initials:'TL' },
       { id:'vs',   name:'Vegard Somdal',             role:'Salg · Reklamasjon (RA)', email:'', initials:'VS' },
-      { id:'pop',  name:'Per Øivind Pedersen',       role:'Salg · Reklamasjon (RA)', email:'', initials:'PP' },
+      { id:'pop',  name:'Per Øivind Pedersen',       role:'Salg · Reklamasjon (RA)', email:'', initials:'PØP' },
       { id:'at',   name:'Aleksander Torjussen',      role:'Salg · Reklamasjon (RA)', email:'', initials:'AT' },
     ],
     meetings: [],
@@ -460,7 +460,7 @@ const seedProdukt = () => {
     },
     members: [
       { id:'sl',  name:'Snorre Larstad',       role:'Direktør for Sortimentsutvikling og Sourcing', email:'', initials:'SL' },
-      { id:'tpj', name:'Tom Patrich Josefsen', role:'Leder for Produktutvikling', email:'tpj@vikingbad.no', initials:'TJ' },
+      { id:'tpj', name:'Tom Patrich Josefsen', role:'Leder for Produktutvikling', email:'tpj@vikingbad.no', initials:'TPJ' },
       { id:'po',  name:'Peder Østmoe',        role:'Teamleder Teknisk kundeservice', email:'peder@vikingbad.no', initials:'PØ' },
     ],
     meetings: [],
@@ -692,7 +692,7 @@ const Avatar = ({ member, size=36 }) => {
   return (
     <div style={{width:size,height:size,borderRadius:'50%',background:palette[idx],display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:size*0.38,fontWeight:600,letterSpacing:0.5,flexShrink:0}}
       title={`${member.name} – ${member.role}`}>
-      {member.initials || ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : (member.name||'').slice(0,2).toUpperCase())(( member.name||'').trim().split(/\s+/))}
+      {member.initials || ((p) => p.length > 1 ? p.map(w=>w[0]).join('').toUpperCase() : (member.name||'').slice(0,2).toUpperCase())(( member.name||'').trim().split(/\s+/))}
     </div>
   );
 };
@@ -852,7 +852,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
           </button>
         ) : displayName ? (
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px'}}>
-            {me ? <Avatar member={me} size={32}/> : <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(184,137,59,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#DCC49C',fontSize:12,fontWeight:700}}>{((p)=>p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():(displayName||'').slice(0,2).toUpperCase())((displayName||'').trim().split(/\s+/))}</div>}
+            {me ? <Avatar member={me} size={32}/> : <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(184,137,59,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#DCC49C',fontSize:12,fontWeight:700}}>{((p)=>p.length>1?p.map(w=>w[0]).join('').toUpperCase():(displayName||'').slice(0,2).toUpperCase())((displayName||'').trim().split(/\s+/))}</div>}
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:13,color:'#fff',fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{displayName}</div>
               {displayRole && <div style={{fontSize:11,color:'#A89978',marginTop:1}}>{displayRole}</div>}
@@ -2484,7 +2484,7 @@ const TeamView = ({ data, save }) => {
         {editing && <MemberForm member={editing}
           onSave={(m)=>{
             const parts = (m.name||'').trim().split(/\s+/).filter(Boolean);
-            const initials = parts.length > 1 ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase() : (m.name||'').slice(0,2).toUpperCase();
+            const initials = parts.length > 1 ? parts.map(w=>w[0]).join('').toUpperCase() : (m.name||'').slice(0,2).toUpperCase();
             const final = {...m, initials};
             if (m.id) save({...data, members:data.members.map(x=>x.id===m.id?final:x)});
             else save({...data, members:[...data.members, {...final, id:uid('m')}]});

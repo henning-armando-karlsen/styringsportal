@@ -92,7 +92,7 @@ export default function HomeView({ data, currentUserId, onNavigate, save, allDat
           </div>
         </div>
         <div style={{width:72,height:72,borderRadius:'50%',background:theme.brass,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:26,fontWeight:700,flexShrink:0}}>
-          {me.initials || ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : me.name.slice(0,2).toUpperCase())(me.name.trim().split(/\s+/))}
+          {me.initials || ((p) => p.length > 1 ? p.map(w=>w[0]).join('').toUpperCase() : me.name.slice(0,2).toUpperCase())(me.name.trim().split(/\s+/))}
         </div>
       </div>
 

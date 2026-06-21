@@ -113,7 +113,7 @@ const Avatar = ({ member, size = 36 }) => {
   const idx = (member?.id || '').split('').reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
   return (
     <div title={member?.name} style={{ width: size, height: size, borderRadius: '50%', background: colors[idx], display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: size * 0.38, fontWeight: 700, flexShrink: 0 }}>
-      {member?.initials || ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : (member?.name||'').slice(0,2).toUpperCase())((member?.name||'').trim().split(/\s+/))}
+      {member?.initials || ((p) => p.length > 1 ? p.map(w=>w[0]).join('').toUpperCase() : (member?.name||'').slice(0,2).toUpperCase())((member?.name||'').trim().split(/\s+/))}
     </div>
   );
 };
