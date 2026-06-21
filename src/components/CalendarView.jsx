@@ -70,6 +70,11 @@ function monthWeeks(year, month) {
   return weeks;
 }
 
+/* ── ukevisning: helpers ───────────────────────────────────────────── */
+const weekStart = (iso) => { const x = parseISO(iso); const off = (x.getDay() + 6) % 7; x.setDate(x.getDate() - off); return x; };
+const weekDates = (iso) => { const s = weekStart(iso); return Array.from({ length: 7 }, (_, i) => { const d = new Date(s); d.setDate(s.getDate() + i); return d; }); };
+const isoWeek = (d) => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const dn = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - dn); const ys = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil((((t - ys) / 86400000) + 1) / 7); };
+
 /* ── dagvisning: konstanter + overlapp-layout ──────────────────────── */
 const HOUR_PX = 48;
 const DAY_GUTTER = 54;
@@ -123,7 +128,9 @@ export default function CalendarView({
   const [selectedDay, setSelectedDay] = useState(todayISO);
   const [, setNowTick] = useState(0);
   const dayRef = useRef(null);
+  const weekRef = useRef(null);
   useEffect(() => { if (mode === 'dag' && dayRef.current) dayRef.current.scrollTop = 7 * HOUR_PX - 12; }, [mode, selectedDay]);
+  useEffect(() => { if (mode === 'uke' && weekRef.current) weekRef.current.scrollTop = 7 * HOUR_PX - 12; }, [mode, selectedDay]);
   useEffect(() => { const id = setInterval(() => setNowTick((t) => t + 1), 60000); return () => clearInterval(id); }, []);
 
   const members = data.members || [];
@@ -197,6 +204,7 @@ export default function CalendarView({
     setMonth(mm); setYear(yy);
   };
   const stepDay = (d) => { const x = parseISO(selectedDay); x.setDate(x.getDate() + d); setSelectedDay(toISO(x)); };
+  const stepWeek = (d) => { const x = parseISO(selectedDay); x.setDate(x.getDate() + d * 7); setSelectedDay(toISO(x)); };
 
   /* ── lagring av hendelser (i aktiv portal) ──────────────────────── */
   const saveEvent = (ev) => {
@@ -251,7 +259,7 @@ export default function CalendarView({
           ))}
         </div>
         <div style={{ display: 'flex', background: theme.surfaceAlt, borderRadius: 9, padding: 3 }}>
-          {[['maned', 'Måned'], ['dag', 'Dag'], ['agenda', 'Agenda']].map(([k, l]) => (
+          {[['maned', 'Måned'], ['uke', 'Uke'], ['dag', 'Dag'], ['agenda', 'Agenda']].map(([k, l]) => (
             <button key={k} onClick={() => setMode(k)} style={{ padding: '7px 14px', borderRadius: 7, border: 'none',
               background: mode === k ? theme.surface : 'transparent', color: mode === k ? theme.ink : theme.inkSoft,
               fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>{l}</button>
@@ -315,6 +323,102 @@ export default function CalendarView({
           ))}
         </div>
       )}
+
+      {/* UKEVISNING (Outlook-stil) */}
+      {mode === 'uke' && (() => {
+        const days = weekDates(selectedDay);
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const perDay = days.map((dt) => {
+          const iso = toISO(dt);
+          const evs = byDate[iso] || [];
+          const allDay = evs.filter((e) => !e.time);
+          const timed = layoutDay(evs.filter((e) => e.time).map((e) => {
+            const [h, mi] = e.time.split(':').map(Number);
+            const start = h * 60 + (mi || 0);
+            return { ...e, start, end: start + (e.dur || 60) };
+          }));
+          return { dt, iso, allDay, timed, isToday: iso === todayISO };
+        });
+        const first = days[0], last = days[6];
+        const rng = `${pad(first.getDate())}.${pad(first.getMonth() + 1)} – ${pad(last.getDate())}.${pad(last.getMonth() + 1)}`;
+        const cols = `${DAY_GUTTER}px repeat(7,1fr)`;
+        const anyAllDay = perDay.some((d) => d.allDay.length > 0);
+        return (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12, flexWrap: 'wrap' }}>
+              <button onClick={() => stepWeek(-1)} style={navBtn}><IcLeft /></button>
+              <div style={{ ...heading, fontSize: 19, minWidth: 230 }}>Uke {isoWeek(first)} <span style={{ color: theme.inkMuted, fontWeight: 500, fontSize: 15 }}>· {rng}</span></div>
+              <button onClick={() => stepWeek(1)} style={navBtn}><IcRight /></button>
+              <button onClick={() => setSelectedDay(todayISO)} style={{ ...navBtn, width: 'auto', padding: '0 12px', fontSize: 12.5, fontWeight: 600 }}>I dag</button>
+            </div>
+            <div style={{ background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 12, overflow: 'hidden' }}>
+              {/* ukedag-overskrift */}
+              <div style={{ display: 'grid', gridTemplateColumns: cols, borderBottom: `1px solid ${theme.borderSoft}` }}>
+                <div />
+                {perDay.map((d, i) => (
+                  <div key={d.iso} onClick={() => { setSelectedDay(d.iso); setMode('dag'); }}
+                    style={{ textAlign: 'center', padding: '8px 4px', cursor: 'pointer', borderLeft: `1px solid ${theme.borderSoft}`, background: d.isToday ? theme.brassLight : 'transparent' }}>
+                    <div style={{ fontSize: 10.5, color: theme.inkMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{DOW[i]}</div>
+                    <div style={{ fontSize: 16, fontWeight: d.isToday ? 700 : 500, color: d.isToday ? theme.brass : theme.ink }}>{d.dt.getDate()}</div>
+                  </div>
+                ))}
+              </div>
+              {/* hele-dagen-rad */}
+              {anyAllDay && (
+                <div style={{ display: 'grid', gridTemplateColumns: cols, borderBottom: `1px solid ${theme.borderSoft}`, background: theme.surfaceAlt }}>
+                  <div style={{ fontSize: 9.5, color: theme.inkMuted, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: 1.2, padding: 4 }}>Hele dagen</div>
+                  {perDay.map((d) => (
+                    <div key={d.iso} style={{ borderLeft: `1px solid ${theme.borderSoft}`, padding: 4, display: 'grid', gap: 3, minHeight: 26 }}>
+                      {d.allDay.map((e) => { const t = TYPE[e.type]; return (
+                        <div key={e.key} onClick={e.onClick} title={e.title} style={{ fontSize: 10.5, padding: '2px 5px', borderRadius: 5, background: t.wash, borderLeft: `3px solid ${t.bg}`, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: theme.ink }}>{e.title}</div>
+                      ); })}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* timegrid */}
+              <div ref={weekRef} style={{ maxHeight: 560, overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: cols, position: 'relative', height: 24 * HOUR_PX }}>
+                  <div style={{ position: 'relative' }}>
+                    {HOURS.map((h) => (
+                      <div key={h} style={{ position: 'absolute', top: h * HOUR_PX, left: 0, right: 0, height: HOUR_PX, borderTop: `1px solid ${theme.borderSoft}` }}>
+                        <span style={{ position: 'absolute', top: -7, right: 6, fontSize: 10.5, color: theme.inkMuted, background: theme.surface, padding: '0 2px' }}>{pad(h)}:00</span>
+                      </div>
+                    ))}
+                  </div>
+                  {perDay.map((d) => (
+                    <div key={d.iso} style={{ position: 'relative', borderLeft: `1px solid ${theme.borderSoft}` }}>
+                      {HOURS.map((h) => (
+                        <div key={h} onClick={() => setEditing({ id: uid(), title: '', date: d.iso, endDate: '', allDay: false, time: pad(h) + ':00', scope: 'personlig', owner: currentUserId, location: '', notes: '' })}
+                          style={{ position: 'absolute', top: h * HOUR_PX, left: 0, right: 0, height: HOUR_PX, borderTop: `1px solid ${theme.borderSoft}`, cursor: 'pointer' }} />
+                      ))}
+                      {d.isToday && nowMin >= 0 && (
+                        <div style={{ position: 'absolute', top: (nowMin / 60) * HOUR_PX, left: 0, right: 0, height: 0, borderTop: `2px solid ${theme.rust}`, zIndex: 5 }}>
+                          <span style={{ position: 'absolute', left: -4, top: -4, width: 8, height: 8, borderRadius: '50%', background: theme.rust }} />
+                        </div>
+                      )}
+                      {d.timed.map((e) => {
+                        const t = TYPE[e.type];
+                        const top = (e.start / 60) * HOUR_PX;
+                        const hgt = Math.max(((e.end - e.start) / 60) * HOUR_PX - 2, 20);
+                        return (
+                          <div key={e.key} onClick={e.onClick} title={`${e.time} · ${e.title}`}
+                            style={{ position: 'absolute', top, height: hgt, left: `calc(${(e._col / e._ncol) * 100}% + 2px)`, width: `calc(${(1 / e._ncol) * 100}% - 4px)`,
+                              background: t.wash, borderLeft: `3px solid ${t.bg}`, borderRadius: 5, padding: '2px 5px', cursor: 'pointer', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.08)' }}>
+                            <div style={{ fontSize: 10.5, fontWeight: 600, color: theme.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
+                            {hgt > 32 && <div style={{ fontSize: 10, color: theme.inkMuted }}>{e.time}</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* DAGVISNING (Outlook-stil) */}
       {mode === 'dag' && (() => {
