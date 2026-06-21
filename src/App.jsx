@@ -10,6 +10,7 @@ import OrgChartView from './components/OrgChartView';
 import CalendarView from './components/CalendarView';
 import ArshjulView from './components/ArshjulView';
 import { supabase } from './lib/supabase.js';
+import { collectOwnership, myWork, looseEnds, globalMemberIds } from './lib/coherence';
 
 /* ===== ICONS (inline lucide-style SVGs) ===== */
 const ico = (paths) => ({ size = 16, style = {}, ...rest }) => (
@@ -746,6 +747,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
     { label: null, items: [
       { key:'home',       label:'Hjem',            icon:Home },
       { key:'desk',       label:'Mitt skrivebord', icon:LayoutDashboard },
+      { key:'flyt',       label:'Flyt & kontroll', icon:Activity, count:counts.flyt },
       { key:'kalender',   label:'Kalender',        icon:CalendarClock },
       { key:'crossorg',   label:'På tvers',        icon:Command, count:counts.crossorg },
     ]},
@@ -4458,7 +4460,79 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
 };
 
 /* ===== MITT SKRIVEBORD ===== */
-const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allData={}, forumData={}, activePortal, onOpenForum, markedsplanTasks=[], sortimentTasks=[] }) => {
+const FlytKontrollGlobal = ({ looseEnds, onNavigate }) => {
+  const le = looseEnds || { ownerless:[], unresolved:[], overdue:[], decNoReview:[], propNoMeeting:[], total:0 };
+  const danger = '#C2502B';
+  const warn = '#8B6914';
+  const Row = ({ o, issue, tone }) => (
+    <div onClick={()=>onNavigate && onNavigate(o.view)} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 12px',background:theme.surface,border:`1px solid ${theme.border}`,borderLeft:`3px solid ${tone}`,borderRadius:9,marginBottom:6,cursor:'pointer'}}>
+      <Pill bg={theme.surfaceAlt} color={theme.inkSoft}>{o.label || o.kind}</Pill>
+      <span style={{flex:1,fontSize:13.5,color:theme.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.title || <em style={{color:theme.inkMuted}}>uten tittel</em>}</span>
+      <span style={{fontSize:11.5,color:theme.inkMuted,whiteSpace:'nowrap'}}>{o.portalLabel}</span>
+      {issue && <span style={{fontSize:12,color:tone,fontWeight:600,whiteSpace:'nowrap'}}>{issue}</span>}
+      <span style={{fontSize:12,color:theme.brass,fontWeight:700,whiteSpace:'nowrap'}}>Åpne →</span>
+    </div>
+  );
+  const Section = ({ title, hint, tone, items, render }) => items.length === 0 ? null : (
+    <div style={{marginBottom:24}}>
+      <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:2}}>
+        <span style={{width:9,height:9,borderRadius:3,background:tone}}/>
+        <h3 style={{margin:0,fontFamily:'Fraunces, Georgia, serif',fontSize:16,fontWeight:600,color:theme.ink}}>{title} <span style={{color:theme.inkMuted,fontWeight:400}}>· {items.length}</span></h3>
+      </div>
+      {hint && <p style={{margin:'0 0 10px 19px',fontSize:12.5,color:theme.inkSoft}}>{hint}</p>}
+      <div style={{paddingLeft:19}}>{items.map(render)}</div>
+    </div>
+  );
+  const stats = [
+    { n: le.ownerless.length, l:'uten eier', t:danger },
+    { n: le.unresolved.length, l:'ukoblet eier', t:danger },
+    { n: le.overdue.length, l:'forfalt', t:danger },
+    { n: le.decNoReview.length, l:'beslutning uten review', t:warn },
+    { n: le.propNoMeeting.length, l:'sak uten møte', t:warn },
+  ];
+  return (
+    <div>
+      <SectionHeading overline="Sammenhengskontroll · hele organisasjonen" title="Flyt & kontroll"/>
+      <p style={{margin:'-8px 0 20px',fontSize:13.5,color:theme.inkSoft,lineHeight:1.6,maxWidth:760}}>
+        Fanger opp alt ansvar som kan henge eller ligge gjemt — på tvers av alle portaler, forum, tverrgående prosjekter, markedsplan og sortiment. Alt med en eier som matcher et medlem vises automatisk på vedkommendes skrivebord; her ser du restene.
+      </p>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))',gap:10,marginBottom:24}}>
+        {stats.map((s,i)=>(
+          <Card key={i} padded={false} style={{padding:'12px 14px',borderTop:`3px solid ${s.n>0?s.t:theme.sage}`}}>
+            <div style={{fontFamily:'Fraunces, Georgia, serif',fontSize:26,fontWeight:600,color:s.n>0?s.t:theme.sage,lineHeight:1}}>{s.n}</div>
+            <div style={{fontSize:12,color:theme.inkSoft,marginTop:3}}>{s.l}</div>
+          </Card>
+        ))}
+      </div>
+
+      {le.total === 0 && (
+        <Card style={{textAlign:'center',background:theme.sageLight,border:`1px solid ${theme.sage}`}}>
+          <div style={{fontFamily:'Fraunces, Georgia, serif',fontSize:18,fontWeight:600,color:theme.ink,marginBottom:4}}>✓ Alt henger sammen</div>
+          <div style={{fontSize:13,color:theme.inkSoft}}>Ingen poster uten eier, ingen ukoblet ansvar, ingenting forfalt. Alt med ansvar flyter til riktig skrivebord.</div>
+        </Card>
+      )}
+
+      <Section title="Uten eier" tone={danger} items={le.ownerless}
+        hint="Ingen ansvarlig satt — vises ikke for noen. Åpne og sett en eier."
+        render={(o)=><Row key={o.uid} o={o} tone={danger} issue="ingen eier"/>}/>
+      <Section title="Eier matcher ikke et medlem" tone={danger} items={le.unresolved}
+        hint="Eier-navnet finnes ikke i medlemslistene, så posten når ingen sitt skrivebord."
+        render={(o)=><Row key={o.uid} o={o} tone={danger} issue={o.ownerName ? `«${o.ownerName}»` : 'ukjent eier'}/>}/>
+      <Section title="Forfalt" tone={danger} items={le.overdue}
+        hint="Frist passert og ikke fullført."
+        render={(o)=><Row key={o.uid} o={o} tone={danger} issue={`frist ${o.dueDate ? relativeDate(o.dueDate) : ''}`}/>}/>
+      <Section title="Beslutninger uten review-dato" tone={warn} items={le.decNoReview}
+        hint="Vedtatt, men ingen oppfølgingsdato — faller utenfor personlig oppfølging."
+        render={(o)=><Row key={o.uid} o={o} tone={warn} issue="ingen review"/>}/>
+      <Section title="Innmeldte saker uten møte" tone={warn} items={le.propNoMeeting}
+        hint="Ligger i puljen uten å være tildelt et møte — kan bli liggende."
+        render={(o)=><Row key={o.uid} o={o} tone={warn} issue="i puljen"/>}/>
+    </div>
+  );
+};
+
+const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allData={}, forumData={}, activePortal, onOpenForum, unifiedTasks=null, markedsplanTasks=[], sortimentTasks=[] }) => {
   const me = data.members.find(m => m.id === currentUserId);
   if (!me) {
     return <EmptyState icon={Users} title="Velg hvem du er pålogget som"
@@ -4467,7 +4541,7 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
 
   const memberById = (id) => data.members.find(m => m.id === id);
   const forumTasksList = Object.entries(forumData||{}).flatMap(([fid,fd])=>(fd.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført').map(t=>({...t,_forum:fid})));
-  const myTasks = [...data.tasks.filter(t => t.owner === me.id && t.status !== 'fullført'), ...forumTasksList, ...markedsplanTasks, ...sortimentTasks]
+  const myTasks = (unifiedTasks || [...data.tasks.filter(t => t.owner === me.id && t.status !== 'fullført'), ...forumTasksList, ...markedsplanTasks, ...sortimentTasks])
     .sort((a,b) => (a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
   const overdueTasks = myTasks.filter(t => t.dueDate && daysFromNow(t.dueDate) < 0);
   const myMeetings = data.meetings.filter(m =>
@@ -4631,7 +4705,14 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
                 onToggle={()=>onNavigate('markedsplan')}/>
             ) : (
               <TaskRow key={task.id} task={task} member={memberById(task.owner)} compact
-                onToggle={()=>{ const n=task.status==='fullført'?'pågår':'fullført'; save({...data,tasks:data.tasks.map(t=>t.id===task.id?{...t,status:n}:t)}); }}/>
+                onToggle={()=>{
+                  if (task.source === 'portal' && task.portal === activePortal && task.srcId) {
+                    const n=task.status==='fullført'?'pågår':'fullført';
+                    save({...data,tasks:data.tasks.map(t=>t.id===task.srcId?{...t,status:n}:t)});
+                  } else {
+                    onNavigate(task.view || 'tasks');
+                  }
+                }}/>
             ))}
           </div>
         </Card>
@@ -6056,6 +6137,16 @@ const App = ({ identity }) => {
   const crossProjects = (crossorgData.projects || []).filter(p=>p.status!=='fullført'&&p.status!=='avlyst');
   const myProjectCount = [...deptProjects, ...crossProjects].filter(p => p.lead===currentUserId || (p.members||[]).some(m=>m.memberId===currentUserId)).length;
 
+  const coherenceItems = useMemo(
+    () => collectOwnership({ allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments }),
+    [allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments]
+  );
+  const unifiedMyWork = useMemo(() => myWork(coherenceItems, currentUserId), [coherenceItems, currentUserId]);
+  const orgLooseEnds = useMemo(
+    () => looseEnds(coherenceItems, globalMemberIds(allData, forumData)),
+    [coherenceItems, allData, forumData]
+  );
+
   const counts = {
     meetings: data.meetings.filter(m=>m.status==='planlagt'&&daysFromNow(m.date)>=0).length,
     decisions: data.decisions.length,
@@ -6070,6 +6161,7 @@ const App = ({ identity }) => {
     proposals: (data.agendaProposals || []).filter(p=>p.status==='foreslått').length,
     unreadMessages: totalUnread(data, currentUserId),
     crossorg: programs.length,
+    flyt: orgLooseEnds.total,
   };
 
   return (
@@ -6091,8 +6183,9 @@ const App = ({ identity }) => {
         onOpenForum={handleOpenForum}
         forumData={forumData}/>
       <main style={{flex:1,padding:'40px 48px 80px',minWidth:0,maxWidth:1280,position:'relative'}}>
-        {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity} forumData={forumData} onOpenForum={handleOpenForum}/>}
-        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')} sortimentTasks={sortimentAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
+        {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity} forumData={forumData} onOpenForum={handleOpenForum} unifiedTasks={unifiedMyWork}/>}
+        {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} unifiedTasks={unifiedMyWork} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')} sortimentTasks={sortimentAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
+        {view==='flyt'        && <FlytKontrollGlobal looseEnds={orgLooseEnds} onNavigate={handleNavigate}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='arshjul'    && <ArshjulView data={data} save={save} currentUserId={currentUserId} />}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}

@@ -26,7 +26,7 @@ const relativeDate = (iso) => { const d=daysFromNow(iso); if(d===0) return 'I da
 const healthColor = (h) => h==='grønn'?theme.sage:h==='gul'?theme.amber:h==='rød'?theme.rust:theme.inkMuted;
 const healthLabel = (h) => h==='grønn'?'Pa sporet':h==='gul'?'Folges noye':h==='rød'?'I trobbel':'';
 
-export default function HomeView({ data, currentUserId, onNavigate, save, allData, crossorgData, availablePortals, activePortal, onSwitchPortal, onAsk, identity, forumData={}, onOpenForum }) {
+export default function HomeView({ data, currentUserId, onNavigate, save, allData, crossorgData, availablePortals, activePortal, onSwitchPortal, onAsk, identity, forumData={}, onOpenForum, unifiedTasks=null }) {
   const me = data.members?.find(m => m.id === currentUserId);
   if (!me) return null;
 
@@ -36,7 +36,7 @@ export default function HomeView({ data, currentUserId, onNavigate, save, allDat
 
   // KPI data
   const forumTasks = Object.values(forumData||{}).flatMap(fd=>(fd.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført'));
-  const myTasks = [...(data.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført'), ...(crossorgData?.projects||[]).flatMap(p=>(p.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført')), ...forumTasks];
+  const myTasks = unifiedTasks || [...(data.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført'), ...(crossorgData?.projects||[]).flatMap(p=>(p.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført')), ...forumTasks];
   const overdueTasks = myTasks.filter(t=>t.dueDate&&daysFromNow(t.dueDate)<0);
   const tomorrowTasks = myTasks.filter(t=>t.dueDate&&daysFromNow(t.dueDate)===1);
 
