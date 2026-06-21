@@ -1430,7 +1430,7 @@ const TranscriptModal = ({ open, onClose, meeting, data, onApply }) => {
 
       {step === 'loading' && (
         <div style={{padding:'40px 20px',textAlign:'center'}}>
-          <div style={{display:'inline-block',width:48,height:48,borderRadius:'50%',background:`linear-gradient(135deg, ${theme.brass}, ${theme.amber})`,marginBottom:18,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',animation:'pulse 1.6s ease-in-out infinite'}}>
+          <div style={{width:48,height:48,borderRadius:'50%',background:`linear-gradient(135deg, ${theme.brass}, ${theme.amber})`,marginBottom:18,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',animation:'pulse 1.6s ease-in-out infinite'}}>
             <Sparkles size={22}/>
           </div>
           <h3 style={{fontFamily:'Fraunces, Georgia, serif',fontSize:22,fontWeight:500,color:theme.ink,margin:'0 0 8px'}}>Claude analyserer transkripsjonen</h3>
