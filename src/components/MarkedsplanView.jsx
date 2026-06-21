@@ -71,6 +71,19 @@ const SWOT = [
   { key: "muligheter", label: "Muligheter", sub: "Eksternt \xB7 positivt", color: C.goldDeep, wash: C.goldWash },
   { key: "trusler", label: "Trusler", sub: "Eksternt \xB7 negativt", color: C.pagaar, wash: C.amberWash }
 ];
+const CAMPAIGN_STATUS = ["id\xE9", "planlagt", "p\xE5g\xE5r", "fullf\xF8rt", "avlyst"];
+const CAMPAIGN_STATUS_COLOR = { "id\xE9": C.ide, planlagt: C.planlagt, "p\xE5g\xE5r": C.pagaar, "fullf\xF8rt": C.fullfort, avlyst: C.danger };
+const CAMPAIGN_STATUS_WASH = { "id\xE9": C.ideWash, planlagt: C.planlagtWash, "p\xE5g\xE5r": C.pagaarWash, "fullf\xF8rt": C.fullfortWash, avlyst: C.rustWash };
+const seedDimensions = {
+  markets: [
+    { id: "forhandler", label: "Forhandler" },
+    { id: "sluttkunde", label: "Sluttkunde" },
+    { id: "studio", label: "Studio" }
+  ],
+  categories: [],
+  channels: CHANNELS.map((c) => ({ id: c, label: c }))
+};
+const seedCampaigns = [];
 const seedGoals = [];
 const seedActivities = [];
 const seedHandoffs = [];
@@ -353,6 +366,8 @@ function MarkedsplanVerktoy({ data, onChange, onPushToPortal, embedded = false, 
   const [tasks, setTasks] = useState(d.tasks || seedTasks);
   const [strategy, setStrategy] = useState(d.strategy || seedStrategy);
   const [pushLog, setPushLog] = useState(d.pushLog || {});
+  const [dimensions, setDimensions] = useState(d.dimensions || seedDimensions);
+  const [campaigns, setCampaigns] = useState(d.campaigns || seedCampaigns);
   const didMount = useRef(false);
   useEffect(() => {
     if (!onChange) return;
@@ -360,8 +375,8 @@ function MarkedsplanVerktoy({ data, onChange, onPushToPortal, embedded = false, 
       didMount.current = true;
       return;
     }
-    onChange({ goals, activities, tasks, handoffs, learnings, strategy, pushLog });
-  }, [goals, activities, tasks, handoffs, learnings, strategy, pushLog]);
+    onChange({ goals, activities, tasks, handoffs, learnings, strategy, pushLog, dimensions, campaigns });
+  }, [goals, activities, tasks, handoffs, learnings, strategy, pushLog, dimensions, campaigns]);
   const [view, setView] = useState("oversikt");
   const [period, setPeriod] = useState("Q2 2026");
   const [modal, setModal] = useState(null);
@@ -458,11 +473,15 @@ function MarkedsplanVerktoy({ data, onChange, onPushToPortal, embedded = false, 
     }
     return res;
   };
-  const tabs = [["oversikt", "Oversikt"], ["strategi", "Strategi"], ["mal", "M\xE5l"], ["trakt", "Trakt"], ["samhandling", "Samhandling"], ["aktiviteter", "Aktiviteter"], ["tidslinje", "Aktivitetskart"], ["oppgaver", "Oppgaver"], ["laering", "L\xE6ring"]];
-  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", fontFamily: sans, color: C.ink, background: embedded ? "transparent" : C.bg, minHeight: embedded ? "auto" : 680, borderRadius: embedded ? 0 : 16, overflow: "hidden", border: embedded ? "none" : `1px solid ${C.line}` } }, !embedded && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 26px", borderBottom: `1px solid ${C.line}`, background: C.surface } }, /* @__PURE__ */ React.createElement(Logo, null), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", color: C.gold } }, "Styringsportal")), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 26px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 600, color: C.gold, letterSpacing: 1, textTransform: "uppercase" } }, "Marked \xD7 Salg"), /* @__PURE__ */ React.createElement("h1", { style: { margin: "4px 0 2px", fontFamily: serif, fontSize: 27, fontWeight: 600, letterSpacing: -0.3 } }, "Markedsplan"), /* @__PURE__ */ React.createElement("p", { style: { margin: 0, fontSize: 13, color: C.inkSoft } }, "Fagspine: ", /* @__PURE__ */ React.createElement("strong", { style: { fontWeight: 600 } }, "SOSTAC"), " \u2014 situasjon \xB7 m\xE5l \xB7 strategi \xB7 taktikk \xB7 handling \xB7 kontroll.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(Btn, { small: true, variant: "ghost", onClick: () => setModal({ kind: "sync" }), title: "Send aktiviteter og oppgaver med ansvarlig til Styringsportalen" }, "Synk ansvarlige \u2192 Portal", portalItems.length ? ` (${portalItems.length})` : ""), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: C.inkSoft, fontWeight: 600 } }, "Periode"), /* @__PURE__ */ React.createElement("select", { value: period, onChange: (e) => setPeriod(e.target.value), style: { ...inputStyle, width: "auto", padding: "7px 10px", background: C.surface } }, PERIODS.map((p) => /* @__PURE__ */ React.createElement("option", { key: p }, p)))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, marginTop: 18, borderBottom: `1px solid ${C.line}`, flexWrap: "wrap" } }, tabs.map(([k, label]) => /* @__PURE__ */ React.createElement("button", { key: k, onClick: () => setView(k), style: { fontFamily: sans, fontSize: 13.5, fontWeight: 600, cursor: "pointer", border: "none", background: "none", padding: "10px 12px", color: view === k ? C.ink : C.inkFaint, borderBottom: view === k ? `2px solid ${C.gold}` : "2px solid transparent", marginBottom: -1 } }, label)))), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 26px 28px" } }, view === "oversikt" && /* @__PURE__ */ React.createElement(Oversikt, { goalsInPeriod, actsInPeriod, budgetPlan, budgetActual, openHandoffs, carryLearnings, actById, strategy, setView }), view === "strategi" && /* @__PURE__ */ React.createElement(StrategiView, { strategy, onAddSwot: addSwot, onRemoveSwot: removeSwot, onSetStp: setStp, onSetAnsoff: setAnsoff }), view === "mal" && /* @__PURE__ */ React.createElement(MalView, { goalsInPeriod, onAdd: () => setModal({ kind: "goal", data: { period } }), onEdit: (g) => setModal({ kind: "goal", data: g }), onToggleStatus: toggleGoalStatus, onDelete: delGoal }), view === "trakt" && /* @__PURE__ */ React.createElement(TraktView, { activities, goals, handoffs, onEdit: (a) => setModal({ kind: "activity", data: a }) }), view === "samhandling" && /* @__PURE__ */ React.createElement(SamhandlingView, { goals, activities, tasks, handoffs, actById, onAddHandoff: (aid) => setModal({ kind: "handoff", data: { activityId: aid || "" } }), onEditHandoff: (h) => setModal({ kind: "handoff", data: h }), onToggleHandoff: toggleHandoff, onDelHandoff: delHandoff }), view === "aktiviteter" && /* @__PURE__ */ React.createElement(AktiviteterView, { actsInPeriod, goalById, handoffs, pushLog, onAdd: () => setModal({ kind: "activity", data: { period } }), onEdit: (a) => setModal({ kind: "activity", data: a }), onCycleStatus: cycleActStatus, onToggleHandoff: toggleHandoff, onAddHandoff: (aid) => setModal({ kind: "handoff", data: { activityId: aid || "" } }), onDelete: delAct }), view === "tidslinje" && /* @__PURE__ */ React.createElement(AktivitetskartView, { activities, goalById, onEdit: (a) => setModal({ kind: "activity", data: a }), onAdd: () => setModal({ kind: "activity", data: { period } }) }), view === "oppgaver" && /* @__PURE__ */ React.createElement(OppgaverView, { tasks, actById, pushLog, onAdd: () => setModal({ kind: "task", data: { period } }), onEdit: (t) => setModal({ kind: "task", data: t }), onCycleStatus: cycleTaskStatus, onDelete: delTask, onSync: () => setModal({ kind: "sync" }) }), view === "laering" && /* @__PURE__ */ React.createElement(LaeringView, { learnings, goalById, actById, onAdd: () => setModal({ kind: "learning", data: { period } }), onToggleCarry: toggleCarry, onDelete: delLearning })), modal?.kind === "goal" && /* @__PURE__ */ React.createElement(GoalModal, { data: modal.data, onClose: () => setModal(null), onSave: (g) => {
+  const campaignById = (id) => campaigns.find((c) => c.id === id);
+  const saveCampaign = (c) => setCampaigns((cs) => c.id ? cs.map((x) => x.id === c.id ? { ...c, updatedAt: new Date().toISOString() } : x) : [...cs, { ...c, id: uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]);
+  const delCampaign = (id) => { setCampaigns((cs) => cs.filter((x) => x.id !== id)); setActivities((as) => as.map((a) => a.campaignId === id ? { ...a, campaignId: "" } : a)); };
+  const looseEnds = computeLooseEnds({ activities, tasks, handoffs, campaigns, goals, members });
+  const tabs = [["oversikt", "Oversikt"], ["strategi", "Strategi"], ["mal", "M\xE5l"], ["trakt", "Trakt"], ["samhandling", "Samhandling"], ["kampanjer", "Kampanjer"], ["aktiviteter", "Aktiviteter"], ["tidslinje", "Aktivitetskart"], ["oppgaver", "Oppgaver"], ["laering", "L\xE6ring"], ["kontroll", looseEnds.total > 0 ? `Flyt & kontroll (${looseEnds.total})` : "Flyt & kontroll"]];
+  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", fontFamily: sans, color: C.ink, background: embedded ? "transparent" : C.bg, minHeight: embedded ? "auto" : 680, borderRadius: embedded ? 0 : 16, overflow: "hidden", border: embedded ? "none" : `1px solid ${C.line}` } }, !embedded && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 26px", borderBottom: `1px solid ${C.line}`, background: C.surface } }, /* @__PURE__ */ React.createElement(Logo, null), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", color: C.gold } }, "Styringsportal")), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 26px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 600, color: C.gold, letterSpacing: 1, textTransform: "uppercase" } }, "Marked \xD7 Salg"), /* @__PURE__ */ React.createElement("h1", { style: { margin: "4px 0 2px", fontFamily: serif, fontSize: 27, fontWeight: 600, letterSpacing: -0.3 } }, "Markedsplan"), /* @__PURE__ */ React.createElement("p", { style: { margin: 0, fontSize: 13, color: C.inkSoft } }, "Fagspine: ", /* @__PURE__ */ React.createElement("strong", { style: { fontWeight: 600 } }, "SOSTAC"), " \u2014 situasjon \xB7 m\xE5l \xB7 strategi \xB7 taktikk \xB7 handling \xB7 kontroll.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(Btn, { small: true, variant: "ghost", onClick: () => setModal({ kind: "sync" }), title: "Send aktiviteter og oppgaver med ansvarlig til Styringsportalen" }, "Synk ansvarlige \u2192 Portal", portalItems.length ? ` (${portalItems.length})` : ""), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: C.inkSoft, fontWeight: 600 } }, "Periode"), /* @__PURE__ */ React.createElement("select", { value: period, onChange: (e) => setPeriod(e.target.value), style: { ...inputStyle, width: "auto", padding: "7px 10px", background: C.surface } }, PERIODS.map((p) => /* @__PURE__ */ React.createElement("option", { key: p }, p)))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, marginTop: 18, borderBottom: `1px solid ${C.line}`, flexWrap: "wrap" } }, tabs.map(([k, label]) => /* @__PURE__ */ React.createElement("button", { key: k, onClick: () => setView(k), style: { fontFamily: sans, fontSize: 13.5, fontWeight: 600, cursor: "pointer", border: "none", background: "none", padding: "10px 12px", color: view === k ? C.ink : C.inkFaint, borderBottom: view === k ? `2px solid ${C.gold}` : "2px solid transparent", marginBottom: -1 } }, label)))), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 26px 28px" } }, looseEnds.total > 0 && view !== "kontroll" && /* @__PURE__ */ React.createElement(LooseEndsBanner, { count: looseEnds.total, onClick: () => setView("kontroll") }), view === "oversikt" && /* @__PURE__ */ React.createElement(Oversikt, { goalsInPeriod, actsInPeriod, budgetPlan, budgetActual, openHandoffs, carryLearnings, actById, strategy, setView }), view === "strategi" && /* @__PURE__ */ React.createElement(StrategiView, { strategy, onAddSwot: addSwot, onRemoveSwot: removeSwot, onSetStp: setStp, onSetAnsoff: setAnsoff }), view === "mal" && /* @__PURE__ */ React.createElement(MalView, { goalsInPeriod, onAdd: () => setModal({ kind: "goal", data: { period } }), onEdit: (g) => setModal({ kind: "goal", data: g }), onToggleStatus: toggleGoalStatus, onDelete: delGoal }), view === "trakt" && /* @__PURE__ */ React.createElement(TraktView, { activities, goals, handoffs, onEdit: (a) => setModal({ kind: "activity", data: a }) }), view === "samhandling" && /* @__PURE__ */ React.createElement(SamhandlingView, { goals, activities, tasks, handoffs, actById, onAddHandoff: (aid) => setModal({ kind: "handoff", data: { activityId: aid || "" } }), onEditHandoff: (h) => setModal({ kind: "handoff", data: h }), onToggleHandoff: toggleHandoff, onDelHandoff: delHandoff }), view === "kampanjer" && /* @__PURE__ */ React.createElement(KampanjerView, { campaigns, activities, dimensions, goalById, members, onAdd: () => setModal({ kind: "campaign", data: {} }), onEdit: (c) => setModal({ kind: "campaign", data: c }), onDelete: delCampaign, onEditDimensions: () => setModal({ kind: "dimensions" }), onAddActivity: (cid) => setModal({ kind: "activity", data: { period, campaignId: cid } }), onEditActivity: (a) => setModal({ kind: "activity", data: a }) }), view === "aktiviteter" && /* @__PURE__ */ React.createElement(AktiviteterView, { actsInPeriod, goalById, campaigns, handoffs, pushLog, onAdd: () => setModal({ kind: "activity", data: { period } }), onEdit: (a) => setModal({ kind: "activity", data: a }), onCycleStatus: cycleActStatus, onToggleHandoff: toggleHandoff, onAddHandoff: (aid) => setModal({ kind: "handoff", data: { activityId: aid || "" } }), onDelete: delAct }), view === "tidslinje" && /* @__PURE__ */ React.createElement(AktivitetskartView, { activities, goalById, onEdit: (a) => setModal({ kind: "activity", data: a }), onAdd: () => setModal({ kind: "activity", data: { period } }) }), view === "oppgaver" && /* @__PURE__ */ React.createElement(OppgaverView, { tasks, actById, pushLog, onAdd: () => setModal({ kind: "task", data: { period } }), onEdit: (t) => setModal({ kind: "task", data: t }), onCycleStatus: cycleTaskStatus, onDelete: delTask, onSync: () => setModal({ kind: "sync" }) }), view === "laering" && /* @__PURE__ */ React.createElement(LaeringView, { learnings, goalById, actById, onAdd: () => setModal({ kind: "learning", data: { period } }), onToggleCarry: toggleCarry, onDelete: delLearning }), view === "kontroll" && /* @__PURE__ */ React.createElement(FlytKontrollView, { looseEnds, onEditActivity: (a) => setModal({ kind: "activity", data: a }), onEditTask: (t) => setModal({ kind: "task", data: t }), onEditCampaign: (c) => setModal({ kind: "campaign", data: c }), onEditHandoff: (h) => setModal({ kind: "handoff", data: h }) })), modal?.kind === "goal" && /* @__PURE__ */ React.createElement(GoalModal, { data: modal.data, onClose: () => setModal(null), onSave: (g) => {
     setGoals((gs) => g.id ? gs.map((x) => x.id === g.id ? g : x) : [...gs, { ...g, id: uid() }]);
     setModal(null);
-  } }), modal?.kind === "activity" && /* @__PURE__ */ React.createElement(ActivityModal, { data: modal.data, goals, members, onClose: () => setModal(null), onSave: (a) => {
+  } }), modal?.kind === "activity" && /* @__PURE__ */ React.createElement(ActivityModal, { data: modal.data, goals, members, campaigns, onClose: () => setModal(null), onSave: (a) => {
     setActivities((as) => a.id ? as.map((x) => x.id === a.id ? a : x) : [...as, { ...a, id: uid() }]);
     setModal(null);
   } }), modal?.kind === "learning" && /* @__PURE__ */ React.createElement(LearningModal, { data: modal.data, goals, activities, onClose: () => setModal(null), onSave: (l) => {
@@ -471,8 +490,14 @@ function MarkedsplanVerktoy({ data, onChange, onPushToPortal, embedded = false, 
   } }), modal?.kind === "task" && /* @__PURE__ */ React.createElement(TaskModal, { data: modal.data, activities, members, onClose: () => setModal(null), onSave: (t) => {
     setTasks((ts) => t.id ? ts.map((x) => x.id === t.id ? t : x) : [...ts, { ...t, id: uid() }]);
     setModal(null);
-  } }), modal?.kind === "handoff" && /* @__PURE__ */ React.createElement(HandoffModal, { data: modal.data, activities, onClose: () => setModal(null), onSave: (h) => {
+  } }), modal?.kind === "handoff" && /* @__PURE__ */ React.createElement(HandoffModal, { data: modal.data, activities, members, onClose: () => setModal(null), onSave: (h) => {
     setHandoffs((hs) => h.id ? hs.map((x) => x.id === h.id ? h : x) : [...hs, { ...h, id: uid() }]);
+    setModal(null);
+  } }), modal?.kind === "campaign" && /* @__PURE__ */ React.createElement(CampaignModal, { data: modal.data, goals, dimensions, members, onClose: () => setModal(null), onSave: (c) => {
+    saveCampaign(c);
+    setModal(null);
+  } }), modal?.kind === "dimensions" && /* @__PURE__ */ React.createElement(DimensionsModal, { dimensions, campaigns, activities, onClose: () => setModal(null), onSave: (dim) => {
+    setDimensions(dim);
     setModal(null);
   } }), modal?.kind === "sync" && /* @__PURE__ */ React.createElement(SyncModal, { items: portalItems, pushLog, onSend: sendToPortal, onClose: () => setModal(null) }));
 }
@@ -570,7 +595,8 @@ function AktivitetskartView({ activities, goalById, onEdit, onAdd }) {
 function MalView({ goalsInPeriod, onAdd, onEdit, onToggleStatus, onDelete }) {
   return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Toolbar, { title: "M\xE5l", subtitle: "Felles, SMART-formulerte m\xE5l \u2014 m\xE5lbare, tidsbestemte og koblet til et forretningsm\xE5l. Skill ledende fra etterslepende KPI.", onAdd, addLabel: "Nytt m\xE5l" }), goalsInPeriod.length === 0 && /* @__PURE__ */ React.createElement(Empty, null, "Ingen m\xE5l i denne perioden. Legg til det f\xF8rste."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 } }, goalsInPeriod.map((g) => /* @__PURE__ */ React.createElement(Card, { key: g.id }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(OwnerBadge, { owner: g.owner }), /* @__PURE__ */ React.createElement(Badge, { color: g.status === "omforent" ? C.fullfort : C.planlagt, wash: g.status === "omforent" ? C.fullfortWash : C.planlagtWash }, g.status === "omforent" ? "\u2713 omforent" : "\u25F7 forslag"), /* @__PURE__ */ React.createElement(Badge, { color: g.kpiType === "leading" ? C.marked : C.goldDeep, wash: g.kpiType === "leading" ? C.markedWash : C.goldWash }, g.kpiType === "leading" ? "Ledende KPI" : "Etterslepende KPI"), /* @__PURE__ */ React.createElement(FunnelBadge, { funnel: g.funnel })), /* @__PURE__ */ React.createElement("h3", { style: { margin: "0 0 4px", fontFamily: serif, fontSize: 17, fontWeight: 600, lineHeight: 1.25 } }, g.title), g.parent && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: C.inkFaint, marginBottom: 10 } }, "\u2191 ", g.parent), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12.5, color: C.inkSoft, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", null, g.metric), /* @__PURE__ */ React.createElement("span", null, fmt(g.actual, g.unit), " / ", fmt(g.target, g.unit))), /* @__PURE__ */ React.createElement(Bar, { value: g.actual, max: g.target, color: pct(g.actual, g.target) >= 100 ? C.fullfort : C.gold }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 14, alignItems: "center" } }, /* @__PURE__ */ React.createElement(SmartTag, { goal: g }), /* @__PURE__ */ React.createElement(Btn, { small: true, variant: "ghost", onClick: () => onToggleStatus(g.id) }, g.status === "omforent" ? "Til forslag" : "Gj\xF8r omforent"), /* @__PURE__ */ React.createElement(Btn, { small: true, variant: "ghost", onClick: () => onEdit(g) }, "Rediger"), /* @__PURE__ */ React.createElement("button", { onClick: () => onDelete(g.id), style: { marginLeft: "auto", border: "none", background: "none", color: C.inkFaint, cursor: "pointer", fontSize: 13 } }, "Slett"))))));
 }
-function AktiviteterView({ actsInPeriod, goalById, handoffs, pushLog, onAdd, onEdit, onAddHandoff, onCycleStatus, onToggleHandoff, onDelete }) {
+function AktiviteterView({ actsInPeriod, goalById, campaigns = [], handoffs, pushLog, onAdd, onEdit, onAddHandoff, onCycleStatus, onToggleHandoff, onDelete }) {
+  const campOf = (id) => campaigns.find((c) => c.id === id);
   const byChannel = useMemo(() => {
     const m = {};
     actsInPeriod.forEach((a) => {
@@ -582,7 +608,7 @@ function AktiviteterView({ actsInPeriod, goalById, handoffs, pushLog, onAdd, onE
     const g = goalById(a.goalId);
     const acthandoffs = handoffs.filter((h) => h.activityId === a.id);
     const over = a.budgetActual > a.budgetPlan;
-    return /* @__PURE__ */ React.createElement(Card, { key: a.id, style: { padding: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 220px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", marginBottom: 5, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: serif, fontSize: 16, fontWeight: 600 } }, a.title), /* @__PURE__ */ React.createElement(Badge, { color: C.inkSoft, wash: C.surfaceAlt }, a.type)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(OwnerBadge, { owner: a.owner }), /* @__PURE__ */ React.createElement(FunnelBadge, { funnel: a.funnel }), a.ansvarlig && /* @__PURE__ */ React.createElement(Badge, { color: C.salg, wash: C.salgWash }, "Ansv: ", a.ansvarlig), g && /* @__PURE__ */ React.createElement(Badge, { color: C.gold, wash: C.goldWash }, "\u21B3 ", g.title), pushLog && pushLog["a:" + a.id] && /* @__PURE__ */ React.createElement(Badge, { color: C.fullfort, wash: C.fullfortWash }, "\u2192 Portal"))), /* @__PURE__ */ React.createElement("button", { onClick: () => onCycleStatus(a.id), title: "Klikk for \xE5 endre status", style: { border: "none", background: "none", cursor: "pointer", padding: 0 } }, /* @__PURE__ */ React.createElement(StatusBadge, { status: a.status }))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12, color: C.inkSoft, marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", null, "Budsjett"), /* @__PURE__ */ React.createElement("span", { style: { color: over ? C.danger : C.inkSoft, fontWeight: over ? 700 : 400 } }, fmt(a.budgetActual, "kr"), " / ", fmt(a.budgetPlan, "kr"), over ? " \u2014 over" : "")), /* @__PURE__ */ React.createElement(Bar, { value: a.budgetActual, max: Math.max(a.budgetPlan, a.budgetActual), color: over ? C.danger : C.salg })), acthandoffs.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.line}` } }, acthandoffs.map((h) => /* @__PURE__ */ React.createElement("div", { key: h.id, style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } }, /* @__PURE__ */ React.createElement(OwnerBadge, { owner: h.from }), /* @__PURE__ */ React.createElement("span", { style: { color: C.inkFaint } }, "\u2192"), /* @__PURE__ */ React.createElement(OwnerBadge, { owner: h.to }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: C.ink, flex: 1 } }, h.description), /* @__PURE__ */ React.createElement("button", { onClick: () => onToggleHandoff(h.id), style: { border: "none", background: "none", cursor: "pointer", padding: 0 } }, /* @__PURE__ */ React.createElement(Badge, { color: h.status === "levert" ? C.fullfort : C.planlagt, wash: h.status === "levert" ? C.fullfortWash : C.planlagtWash }, h.status === "levert" ? "\u2713 levert" : "\xE5pen"))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 12 } }, /* @__PURE__ */ React.createElement(Btn, { small: true, variant: "ghost", onClick: () => onEdit(a) }, "Rediger"), /* @__PURE__ */ React.createElement(Btn, { small: true, variant: "ghost", onClick: () => onAddHandoff(a.id) }, "+ Overlevering"), /* @__PURE__ */ React.createElement("button", { onClick: () => onDelete(a.id), style: { marginLeft: "auto", border: "none", background: "none", color: C.inkFaint, cursor: "pointer", fontSize: 13 } }, "Slett")));
+    return /* @__PURE__ */ React.createElement(Card, { key: a.id, style: { padding: 16 } }, a.campaignId && campOf(a.campaignId) && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: "uppercase", color: C.goldDeep, background: C.goldWash, border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: "3px 9px" } }, "\u25C8 ", campOf(a.campaignId).name)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 220px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", marginBottom: 5, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: serif, fontSize: 16, fontWeight: 600 } }, a.title), /* @__PURE__ */ React.createElement(Badge, { color: C.inkSoft, wash: C.surfaceAlt }, a.type)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(OwnerBadge, { owner: a.owner }), /* @__PURE__ */ React.createElement(FunnelBadge, { funnel: a.funnel }), a.ansvarlig && /* @__PURE__ */ React.createElement(Badge, { color: C.salg, wash: C.salgWash }, "Ansv: ", a.ansvarlig), g && /* @__PURE__ */ React.createElement(Badge, { color: C.gold, wash: C.goldWash }, "\u21B3 ", g.title), pushLog && pushLog["a:" + a.id] && /* @__PURE__ */ React.createElement(Badge, { color: C.fullfort, wash: C.fullfortWash }, "\u2192 Portal"))), /* @__PURE__ */ React.createElement("button", { onClick: () => onCycleStatus(a.id), title: "Klikk for \xE5 endre status", style: { border: "none", background: "none", cursor: "pointer", padding: 0 } }, /* @__PURE__ */ React.createElement(StatusBadge, { status: a.status }))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12, color: C.inkSoft, marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", null, "Budsjett"), /* @__PURE__ */ React.createElement("span", { style: { color: over ? C.danger : C.inkSoft, fontWeight: over ? 700 : 400 } }, fmt(a.budgetActual, "kr"), " / ", fmt(a.budgetPlan, "kr"), over ? " \u2014 over" : "")), /* @__PURE__ */ React.createElement(Bar, { value: a.budgetActual, max: Math.max(a.budgetPlan, a.budgetActual), color: over ? C.danger : C.salg })), acthandoffs.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.line}` } }, acthandoffs.map((h) => /* @__PURE__ */ React.createElement("div", { key: h.id, style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } }, /* @__PURE__ */ React.createElement(OwnerBadge, { owner: h.from }), /* @__PURE__ */ React.createElement("span", { style: { color: C.inkFaint } }, "\u2192"), /* @__PURE__ */ React.createElement(OwnerBadge, { owner: h.to }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: C.ink, flex: 1 } }, h.description), /* @__PURE__ */ React.createElement("button", { onClick: () => onToggleHandoff(h.id), style: { border: "none", background: "none", cursor: "pointer", padding: 0 } }, /* @__PURE__ */ React.createElement(Badge, { color: h.status === "levert" ? C.fullfort : C.planlagt, wash: h.status === "levert" ? C.fullfortWash : C.planlagtWash }, h.status === "levert" ? "\u2713 levert" : "\xE5pen"))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 12 } }, /* @__PURE__ */ React.createElement(Btn, { small: true, variant: "ghost", onClick: () => onEdit(a) }, "Rediger"), /* @__PURE__ */ React.createElement(Btn, { small: true, variant: "ghost", onClick: () => onAddHandoff(a.id) }, "+ Overlevering"), /* @__PURE__ */ React.createElement("button", { onClick: () => onDelete(a.id), style: { marginLeft: "auto", border: "none", background: "none", color: C.inkFaint, cursor: "pointer", fontSize: 13 } }, "Slett")));
   })))));
 }
 function LaeringView({ learnings, goalById, actById, onAdd, onToggleCarry, onDelete }) {
@@ -659,15 +685,15 @@ function GoalModal({ data, onClose, onSave }) {
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
   return /* @__PURE__ */ React.createElement(Modal, { title: data.id ? "Rediger m\xE5l" : "Nytt m\xE5l", onClose, footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Btn, { variant: "ghost", onClick: onClose }, "Avbryt"), /* @__PURE__ */ React.createElement(Btn, { variant: "primary", onClick: () => f.title && onSave(f) }, "Lagre")) }, /* @__PURE__ */ React.createElement(Field, { label: "Tittel", hint: "spesifikt" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.title, onChange: (e) => set("title", e.target.value), placeholder: "Hva skal oppn\xE5s?" })), /* @__PURE__ */ React.createElement(Field, { label: "Forretningsm\xE5l det st\xF8tter", hint: "relevant" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.parent, onChange: (e) => set("parent", e.target.value), placeholder: "Overordnet m\xE5l, f.eks. \xABVekst omsetning +12 %\xBB" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Eier" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.owner, onChange: (e) => set("owner", e.target.value) }, OWNERS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o, value: o }, OWNER_LABEL[o])))), /* @__PURE__ */ React.createElement(Field, { label: "Status" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.status, onChange: (e) => set("status", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "forslag" }, "Forslag"), /* @__PURE__ */ React.createElement("option", { value: "omforent" }, "Omforent")))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Traktposisjon" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.funnel, onChange: (e) => set("funnel", e.target.value) }, FUNNEL.map((x) => /* @__PURE__ */ React.createElement("option", { key: x.key, value: x.key }, x.label, " (", x.fw, ")")))), /* @__PURE__ */ React.createElement(Field, { label: "KPI-type" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.kpiType, onChange: (e) => set("kpiType", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "leading" }, "Ledende (forutser)"), /* @__PURE__ */ React.createElement("option", { value: "lagging" }, "Etterslepende (resultat)")))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "M\xE5ltall", hint: "m\xE5lbart" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.metric, onChange: (e) => set("metric", e.target.value) })), /* @__PURE__ */ React.createElement(Field, { label: "Enhet" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.unit, onChange: (e) => set("unit", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "kr" }, "kr"), /* @__PURE__ */ React.createElement("option", { value: "stk" }, "stk"), /* @__PURE__ */ React.createElement("option", { value: "%" }, "%"), /* @__PURE__ */ React.createElement("option", { value: "visn." }, "visn.")))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "M\xE5l" }, /* @__PURE__ */ React.createElement("input", { type: "number", style: inputStyle, value: f.target, onChange: (e) => set("target", Number(e.target.value)) })), /* @__PURE__ */ React.createElement(Field, { label: "Faktisk" }, /* @__PURE__ */ React.createElement("input", { type: "number", style: inputStyle, value: f.actual, onChange: (e) => set("actual", Number(e.target.value)) }))));
 }
-function ActivityModal({ data, goals, members = [], onClose, onSave }) {
+function ActivityModal({ data, goals, members = [], campaigns = [], onClose, onSave }) {
   const [qs, qe] = quarterMonths(data.period);
-  const [f, setF] = useState({ id: data.id, title: data.title || "", type: data.type || "kampanje", channel: data.channel || "Meta", owner: data.owner || "marked", ansvarlig: data.ansvarlig || "", goalId: data.goalId || (goals[0]?.id || ""), period: data.period, start: data.start ?? qs, end: data.end ?? qe, budgetPlan: data.budgetPlan ?? 0, budgetActual: data.budgetActual ?? 0, status: data.status || "id\xE9", funnel: data.funnel || "bevissthet" });
+  const [f, setF] = useState({ id: data.id, title: data.title || "", type: data.type || "kampanje", channel: data.channel || "Meta", owner: data.owner || "marked", ansvarlig: data.ansvarlig || "", goalId: data.goalId || (goals[0]?.id || ""), campaignId: data.campaignId || "", period: data.period, start: data.start ?? qs, end: data.end ?? qe, budgetPlan: data.budgetPlan ?? 0, budgetActual: data.budgetActual ?? 0, status: data.status || "id\xE9", funnel: data.funnel || "bevissthet" });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
   const save = () => {
     if (!f.title) return;
     onSave({ ...f, start: Math.min(f.start, f.end), end: Math.max(f.start, f.end) });
   };
-  return /* @__PURE__ */ React.createElement(Modal, { title: data.id ? "Rediger aktivitet" : "Ny aktivitet", onClose, footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Btn, { variant: "ghost", onClick: onClose }, "Avbryt"), /* @__PURE__ */ React.createElement(Btn, { variant: "primary", onClick: save }, "Lagre")) }, /* @__PURE__ */ React.createElement(Field, { label: "Tittel" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.title, onChange: (e) => set("title", e.target.value), placeholder: "Navn p\xE5 kampanje/aktivitet" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Type" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.type, onChange: (e) => set("type", e.target.value) }, ACT_TYPES.map((t) => /* @__PURE__ */ React.createElement("option", { key: t }, t)))), /* @__PURE__ */ React.createElement(Field, { label: "Kanal" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.channel, onChange: (e) => set("channel", e.target.value) }, CHANNELS.map((c) => /* @__PURE__ */ React.createElement("option", { key: c }, c))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Eier" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.owner, onChange: (e) => set("owner", e.target.value) }, OWNERS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o, value: o }, OWNER_LABEL[o])))), /* @__PURE__ */ React.createElement(Field, { label: "Traktposisjon", hint: "kundereise" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.funnel, onChange: (e) => set("funnel", e.target.value) }, FUNNEL.map((x) => /* @__PURE__ */ React.createElement("option", { key: x.key, value: x.key }, x.label, " (", x.fw, ")"))))), /* @__PURE__ */ React.createElement(Field, { label: "Ansvarlig (person)", hint: "pushes til Styringsportalen" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.ansvarlig, onChange: (e) => set("ansvarlig", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 velg person \u2014"), f.ansvarlig && !members.some((m) => m.name === f.ansvarlig) && /* @__PURE__ */ React.createElement("option", { value: f.ansvarlig }, f.ansvarlig + " (ikke i listen)"), members.map((m) => /* @__PURE__ */ React.createElement("option", { key: m.id, value: m.name }, m.name)))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Status" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.status, onChange: (e) => set("status", e.target.value) }, ACT_STATUS.map((s) => /* @__PURE__ */ React.createElement("option", { key: s }, s)))), /* @__PURE__ */ React.createElement(Field, { label: "Knyttet til m\xE5l" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.goalId, onChange: (e) => set("goalId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 ingen \u2014"), goals.map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.title))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Starter" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.start, onChange: (e) => set("start", Number(e.target.value)) }, MONTHS.map((m, i) => /* @__PURE__ */ React.createElement("option", { key: m, value: i + 1 }, m)))), /* @__PURE__ */ React.createElement(Field, { label: "Slutter" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.end, onChange: (e) => set("end", Number(e.target.value)) }, MONTHS.map((m, i) => /* @__PURE__ */ React.createElement("option", { key: m, value: i + 1 }, m))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Budsjett (plan)" }, /* @__PURE__ */ React.createElement("input", { type: "number", style: inputStyle, value: f.budgetPlan, onChange: (e) => set("budgetPlan", Number(e.target.value)) })), /* @__PURE__ */ React.createElement(Field, { label: "Budsjett (faktisk)" }, /* @__PURE__ */ React.createElement("input", { type: "number", style: inputStyle, value: f.budgetActual, onChange: (e) => set("budgetActual", Number(e.target.value)) }))));
+  return /* @__PURE__ */ React.createElement(Modal, { title: data.id ? "Rediger aktivitet" : "Ny aktivitet", onClose, footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Btn, { variant: "ghost", onClick: onClose }, "Avbryt"), /* @__PURE__ */ React.createElement(Btn, { variant: "primary", onClick: save }, "Lagre")) }, /* @__PURE__ */ React.createElement(Field, { label: "Tittel" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.title, onChange: (e) => set("title", e.target.value), placeholder: "Navn p\xE5 kampanje/aktivitet" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Type" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.type, onChange: (e) => set("type", e.target.value) }, ACT_TYPES.map((t) => /* @__PURE__ */ React.createElement("option", { key: t }, t)))), /* @__PURE__ */ React.createElement(Field, { label: "Kanal" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.channel, onChange: (e) => set("channel", e.target.value) }, CHANNELS.map((c) => /* @__PURE__ */ React.createElement("option", { key: c }, c))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Eier" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.owner, onChange: (e) => set("owner", e.target.value) }, OWNERS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o, value: o }, OWNER_LABEL[o])))), /* @__PURE__ */ React.createElement(Field, { label: "Traktposisjon", hint: "kundereise" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.funnel, onChange: (e) => set("funnel", e.target.value) }, FUNNEL.map((x) => /* @__PURE__ */ React.createElement("option", { key: x.key, value: x.key }, x.label, " (", x.fw, ")"))))), /* @__PURE__ */ React.createElement(Field, { label: "Ansvarlig (person)", hint: "pushes til Styringsportalen" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.ansvarlig, onChange: (e) => set("ansvarlig", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 velg person \u2014"), f.ansvarlig && !members.some((m) => m.name === f.ansvarlig) && /* @__PURE__ */ React.createElement("option", { value: f.ansvarlig }, f.ansvarlig + " (ikke i listen)"), members.map((m) => /* @__PURE__ */ React.createElement("option", { key: m.id, value: m.name }, m.name)))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Status" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.status, onChange: (e) => set("status", e.target.value) }, ACT_STATUS.map((s) => /* @__PURE__ */ React.createElement("option", { key: s }, s)))), /* @__PURE__ */ React.createElement(Field, { label: "Knyttet til m\xE5l" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.goalId, onChange: (e) => set("goalId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 ingen \u2014"), goals.map((g) => /* @__PURE__ */ React.createElement("option", { key: g.id, value: g.id }, g.title))))), /* @__PURE__ */ React.createElement(Field, { label: "Kampanje", hint: "valgfritt \u2014 grupperer aktiviteten" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.campaignId, onChange: (e) => set("campaignId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 Ufordelt \u2014"), campaigns.map((c) => /* @__PURE__ */ React.createElement("option", { key: c.id, value: c.id }, c.name)))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Starter" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.start, onChange: (e) => set("start", Number(e.target.value)) }, MONTHS.map((m, i) => /* @__PURE__ */ React.createElement("option", { key: m, value: i + 1 }, m)))), /* @__PURE__ */ React.createElement(Field, { label: "Slutter" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.end, onChange: (e) => set("end", Number(e.target.value)) }, MONTHS.map((m, i) => /* @__PURE__ */ React.createElement("option", { key: m, value: i + 1 }, m))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Budsjett (plan)" }, /* @__PURE__ */ React.createElement("input", { type: "number", style: inputStyle, value: f.budgetPlan, onChange: (e) => set("budgetPlan", Number(e.target.value)) })), /* @__PURE__ */ React.createElement(Field, { label: "Budsjett (faktisk)" }, /* @__PURE__ */ React.createElement("input", { type: "number", style: inputStyle, value: f.budgetActual, onChange: (e) => set("budgetActual", Number(e.target.value)) }))));
 }
 function TaskModal({ data, activities, members = [], onClose, onSave }) {
   const [f, setF] = useState({ id: data.id, title: data.title || "", ansvarlig: data.ansvarlig || "", owner: data.owner || "marked", status: data.status || "\xE5pen", due: data.due || "", activityId: data.activityId || "", period: data.period });
@@ -693,10 +719,10 @@ function SyncModal({ items, pushLog, onSend, onClose }) {
   };
   return /* @__PURE__ */ React.createElement(Modal, { title: "Synk til Styringsportalen", onClose, footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Btn, { variant: "ghost", onClick: onClose }, "Lukk"), !result && items.length > 0 && /* @__PURE__ */ React.createElement(Btn, { variant: "primary", onClick: run }, sending ? "Sender\u2026" : `Send ${items.length} til portal`)) }, items.length === 0 && /* @__PURE__ */ React.createElement(Empty, null, "Ingen aktiviteter eller oppgaver har ansvarlig enn\xE5. Sett en ansvarlig for \xE5 kunne pushe."), items.length > 0 && !result && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { style: { margin: "0 0 14px", fontSize: 13, color: C.inkSoft, lineHeight: 1.5 } }, "Dette pushes til Styringsportalen, gruppert per portal/ansvarlig. Hver post har en stabil ", /* @__PURE__ */ React.createElement("code", null, "external_id"), ", s\xE5 ny synk oppdaterer (dubler ikke)."), Object.keys(byPortal).map((portal) => /* @__PURE__ */ React.createElement("div", { key: portal, style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", color: C.inkFaint, marginBottom: 6 } }, "Portal: ", PORTAL_LABEL[portal] || portal), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 6 } }, byPortal[portal].map((i) => /* @__PURE__ */ React.createElement("div", { key: i.externalId, style: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, padding: "7px 10px", background: C.surfaceAlt, borderRadius: 8 } }, /* @__PURE__ */ React.createElement(Badge, { color: i.type === "oppgave" ? C.salg : C.marked, wash: i.type === "oppgave" ? C.salgWash : C.markedWash }, i.type), /* @__PURE__ */ React.createElement("span", { style: { flex: 1, color: C.ink } }, i.tittel), /* @__PURE__ */ React.createElement("span", { style: { color: C.inkSoft, fontWeight: 600 } }, i.ansvarlig), pushLog && pushLog[i.externalId] && /* @__PURE__ */ React.createElement(Badge, { color: C.fullfort, wash: C.fullfortWash }, "oppdatert")))))), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowJson((s) => !s), style: { border: "none", background: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: C.gold, padding: 0, marginTop: 4 } }, showJson ? "Skjul" : "Vis", " pakken (JSON)"), showJson && /* @__PURE__ */ React.createElement("pre", { style: { marginTop: 8, background: C.ink, color: "#E9E2D4", padding: 12, borderRadius: 8, fontSize: 11, lineHeight: 1.45, overflowX: "auto", maxHeight: 200 } }, JSON.stringify(items, null, 2))), result && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "8px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: serif, fontSize: 19, fontWeight: 600, marginBottom: 6 } }, result.ok ? "Synk fullf\xF8rt" : "Synk feilet"), /* @__PURE__ */ React.createElement("p", { style: { margin: 0, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.5 } }, result.mode === "live" && `${result.count} poster sendt til Styringsportalen.`, result.mode === "dry-run" && `${result.count} poster klargjort (dry-run). Ingen backend er koblet p\xE5 enn\xE5 \u2014 i Bolt kobles dette til Supabase. Se integrasjonslaget i koden.`, result.mode === "feil" && `Noe gikk galt: ${result.error || "ukjent feil"}.`, result.mode === "tom" && "Ingenting \xE5 sende.")));
 }
-function HandoffModal({ data, activities, onClose, onSave }) {
+function HandoffModal({ data, activities, members = [], onClose, onSave }) {
   const [f, setF] = useState({ id: data.id, activityId: data.activityId || "", from: data.from || "marked", to: data.to || "salg", fromPerson: data.fromPerson || "", toPerson: data.toPerson || "", description: data.description || "", due: data.due || "", status: data.status || "\xE5pen" });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
-  return /* @__PURE__ */ React.createElement(Modal, { title: data.id ? "Rediger overlevering" : "Ny overlevering", onClose, footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Btn, { variant: "ghost", onClick: onClose }, "Avbryt"), /* @__PURE__ */ React.createElement(Btn, { variant: "primary", onClick: () => f.description && onSave(f) }, "Lagre")) }, /* @__PURE__ */ React.createElement(Field, { label: "Hva overleveres?", hint: "staffettpinnen" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.description, onChange: (e) => set("description", e.target.value), placeholder: "F.eks. \xABLeads fra kampanje klare for oppf\xF8lging\xBB" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Fra (avdeling)" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.from, onChange: (e) => set("from", e.target.value) }, OWNERS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o, value: o }, OWNER_LABEL[o])))), /* @__PURE__ */ React.createElement(Field, { label: "Til (avdeling)" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.to, onChange: (e) => set("to", e.target.value) }, OWNERS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o, value: o }, OWNER_LABEL[o]))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Fra (person)", hint: "valgfritt" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.fromPerson, onChange: (e) => set("fromPerson", e.target.value), placeholder: "Navn" })), /* @__PURE__ */ React.createElement(Field, { label: "Til (person)", hint: "valgfritt" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.toPerson, onChange: (e) => set("toPerson", e.target.value), placeholder: "Navn" }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Knyttet aktivitet", hint: "valgfritt" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.activityId, onChange: (e) => set("activityId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 ingen \u2014"), activities.map((a) => /* @__PURE__ */ React.createElement("option", { key: a.id, value: a.id }, a.title)))), /* @__PURE__ */ React.createElement(Field, { label: "Frist" }, /* @__PURE__ */ React.createElement("input", { type: "date", style: inputStyle, value: f.due, onChange: (e) => set("due", e.target.value) }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Status" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.status, onChange: (e) => set("status", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "\xE5pen" }, "\xC5pen"), /* @__PURE__ */ React.createElement("option", { value: "levert" }, "Levert")))));
+  return /* @__PURE__ */ React.createElement(Modal, { title: data.id ? "Rediger overlevering" : "Ny overlevering", onClose, footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Btn, { variant: "ghost", onClick: onClose }, "Avbryt"), /* @__PURE__ */ React.createElement(Btn, { variant: "primary", onClick: () => f.description && onSave(f) }, "Lagre")) }, /* @__PURE__ */ React.createElement(Field, { label: "Hva overleveres?", hint: "staffettpinnen" }, /* @__PURE__ */ React.createElement("input", { style: inputStyle, value: f.description, onChange: (e) => set("description", e.target.value), placeholder: "F.eks. \xABLeads fra kampanje klare for oppf\xF8lging\xBB" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Fra (avdeling)" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.from, onChange: (e) => set("from", e.target.value) }, OWNERS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o, value: o }, OWNER_LABEL[o])))), /* @__PURE__ */ React.createElement(Field, { label: "Til (avdeling)" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.to, onChange: (e) => set("to", e.target.value) }, OWNERS.map((o) => /* @__PURE__ */ React.createElement("option", { key: o, value: o }, OWNER_LABEL[o]))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Fra (person)", hint: "valgfritt" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.fromPerson, onChange: (e) => set("fromPerson", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 velg \u2014"), f.fromPerson && !members.some((m) => m.name === f.fromPerson) && /* @__PURE__ */ React.createElement("option", { value: f.fromPerson }, f.fromPerson + " (ikke i listen)"), members.map((m) => /* @__PURE__ */ React.createElement("option", { key: m.id, value: m.name }, m.name)))), /* @__PURE__ */ React.createElement(Field, { label: "Til (person)", hint: "mottaker \u2014 havner p\xE5 skrivebordet" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.toPerson, onChange: (e) => set("toPerson", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 velg \u2014"), f.toPerson && !members.some((m) => m.name === f.toPerson) && /* @__PURE__ */ React.createElement("option", { value: f.toPerson }, f.toPerson + " (ikke i listen)"), members.map((m) => /* @__PURE__ */ React.createElement("option", { key: m.id, value: m.name }, m.name))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Knyttet aktivitet", hint: "valgfritt" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.activityId, onChange: (e) => set("activityId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 ingen \u2014"), activities.map((a) => /* @__PURE__ */ React.createElement("option", { key: a.id, value: a.id }, a.title)))), /* @__PURE__ */ React.createElement(Field, { label: "Frist" }, /* @__PURE__ */ React.createElement("input", { type: "date", style: inputStyle, value: f.due, onChange: (e) => set("due", e.target.value) }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Field, { label: "Status" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.status, onChange: (e) => set("status", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "\xE5pen" }, "\xC5pen"), /* @__PURE__ */ React.createElement("option", { value: "levert" }, "Levert")))));
 }
 function LearningModal({ data, goals, activities, onClose, onSave }) {
   const [f, setF] = useState({ id: data.id, text: data.text || "", linkedType: data.linkedType || "activity", linkedId: data.linkedId || (activities[0]?.id || ""), tags: data.tags || [], carryToNext: data.carryToNext ?? false, by: data.by || "Marked", period: data.period });
@@ -707,6 +733,469 @@ function LearningModal({ data, goals, activities, onClose, onSave }) {
     set("linkedType", e.target.value);
     set("linkedId", (e.target.value === "goal" ? goals[0]?.id : activities[0]?.id) || "");
   } }, /* @__PURE__ */ React.createElement("option", { value: "activity" }, "Aktivitet"), /* @__PURE__ */ React.createElement("option", { value: "goal" }, "M\xE5l"))), /* @__PURE__ */ React.createElement(Field, { label: "Av" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.by, onChange: (e) => set("by", e.target.value) }, /* @__PURE__ */ React.createElement("option", null, "Marked"), /* @__PURE__ */ React.createElement("option", null, "Salg"), /* @__PURE__ */ React.createElement("option", null, "Felles")))), /* @__PURE__ */ React.createElement(Field, { label: f.linkedType === "goal" ? "M\xE5l" : "Aktivitet" }, /* @__PURE__ */ React.createElement("select", { style: inputStyle, value: f.linkedId, onChange: (e) => set("linkedId", e.target.value) }, options.map((o) => /* @__PURE__ */ React.createElement("option", { key: o.id, value: o.id }, o.title)))), /* @__PURE__ */ React.createElement(Field, { label: "Tagger" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 7, flexWrap: "wrap" } }, TAG_BANK.map((t) => /* @__PURE__ */ React.createElement("button", { key: t, onClick: () => toggleTag(t), style: { fontFamily: sans, fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "5px 11px", borderRadius: 999, border: `1px solid ${f.tags.includes(t) ? C.gold : C.line}`, background: f.tags.includes(t) ? C.goldWash : C.surface, color: f.tags.includes(t) ? C.goldDeep : C.inkSoft } }, "#", t)))), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, color: C.ink, cursor: "pointer", marginTop: 4 } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: f.carryToNext, onChange: (e) => set("carryToNext", e.target.checked) }), " Ta med til neste plan (lukker sl\xF8yfen)"));
+}
+
+function Chip({ active, onClick, children, color = C.gold, wash = C.goldWash, deep = C.goldDeep }) {
+  return (
+    <button onClick={onClick} type="button" style={{ fontFamily: sans, fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "5px 11px", borderRadius: 999, border: `1px solid ${active ? color : C.line}`, background: active ? wash : C.surface, color: active ? deep : C.inkSoft }}>
+      {children}
+    </button>
+  );
+}
+
+function KampanjerView({ campaigns, activities, dimensions, goalById, members = [], onAdd, onEdit, onDelete, onEditDimensions, onAddActivity, onEditActivity }) {
+  const [groupBy, setGroupBy] = useState("market");
+  const marketLabel = (id) => dimensions.markets.find((m) => m.id === id)?.label || (id ? id : "Uten marked");
+  const catLabel = (id) => dimensions.categories.find((c) => c.id === id)?.label || id;
+  const actsOf = (cid) => activities.filter((a) => a.campaignId === cid);
+  const totalPlan = campaigns.reduce((s, c) => s + (Number(c.budgetPlan) || 0), 0);
+  const totalActBudget = campaigns.reduce((s, c) => s + actsOf(c.id).reduce((x, a) => x + (Number(a.budgetPlan) || 0), 0), 0);
+
+  let lanes;
+  if (groupBy === "market") {
+    lanes = [...dimensions.markets.map((m) => ({ key: m.id, label: m.label, accent: C.gold })), { key: "", label: "Uten marked", accent: C.lineStrong }]
+      .map((l) => ({ ...l, items: campaigns.filter((c) => (c.market || "") === l.key) }))
+      .filter((l) => l.items.length || l.key);
+  } else if (groupBy === "status") {
+    lanes = CAMPAIGN_STATUS.map((s) => ({ key: s, label: s, accent: CAMPAIGN_STATUS_COLOR[s], items: campaigns.filter((c) => (c.status || "id\xE9") === s) }));
+  } else {
+    lanes = OWNERS.map((o) => ({ key: o, label: OWNER_LABEL[o], accent: OWNER_COLOR[o], items: campaigns.filter((c) => (c.owner || "marked") === o) }));
+  }
+  lanes = lanes.filter((l) => l.items.length > 0);
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+        <Toolbar title="Kampanjer" subtitle={"Taktiske beholdere \u2014 samler aktiviteter, budsjett og m\u00E5l under \u00E9n kampanje."} onAdd={onAdd} addLabel="Ny kampanje" />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, marginBottom: 16, marginTop: -6 }}>
+        <div style={{ display: "flex", gap: 26 }}>
+          {[[campaigns.length, "kampanjer"], [fmt(totalPlan, "kr"), "planlagt budsjett"], [fmt(totalActBudget, "kr"), "fordelt p\u00E5 aktiviteter"]].map(([b, l], i) => (
+            <div key={i}>
+              <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 600, color: C.ink, lineHeight: 1 }}>{b}</div>
+              <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 3 }}>{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <Btn small variant="ghost" onClick={onEditDimensions}>Rediger dimensjoner</Btn>
+          <span style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 600 }}>Grupper:</span>
+          {[["market", "Marked"], ["status", "Status"], ["owner", "Eier"]].map(([k, l]) => (
+            <button key={k} onClick={() => setGroupBy(k)} style={{ fontFamily: sans, fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "5px 12px", borderRadius: 999, border: `1px solid ${groupBy === k ? C.gold : C.line}`, background: groupBy === k ? C.goldWash : C.surface, color: groupBy === k ? C.goldDeep : C.inkSoft }}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      {campaigns.length === 0 && <Empty>Ingen kampanjer enn&aring;. Opprett den f&oslash;rste &mdash; knytt deretter aktiviteter til den.</Empty>}
+
+      {lanes.map((lane) => {
+        const laneBudget = lane.items.reduce((s, c) => s + (Number(c.budgetPlan) || 0), 0);
+        return (
+          <div key={lane.key || "none"} style={{ marginBottom: 22 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10, paddingBottom: 6, borderBottom: `1px solid ${C.line}` }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: lane.accent }} />
+              <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 600, color: C.ink, textTransform: "capitalize" }}>{lane.label}</span>
+              <span style={{ fontSize: 12.5, color: C.inkSoft }}>{lane.items.length} kampanjer &middot; {fmt(laneBudget, "kr")}</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(330px, 1fr))", gap: 14 }}>
+              {lane.items.map((c) => {
+                const acts = actsOf(c.id);
+                const actBudget = acts.reduce((s, a) => s + (Number(a.budgetPlan) || 0), 0);
+                const g = c.goalId && goalById ? goalById(c.goalId) : null;
+                return (
+                  <Card key={c.id} style={{ padding: 16, display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
+                      <Badge color={CAMPAIGN_STATUS_COLOR[c.status] || C.planlagt} wash={CAMPAIGN_STATUS_WASH[c.status] || C.planlagtWash}>{c.status || "id\u00E9"}</Badge>
+                      <OwnerBadge owner={c.owner || "marked"} />
+                      {c.market && <Badge color={C.goldDeep} wash={C.goldWash}>{marketLabel(c.market)}</Badge>}
+                    </div>
+                    <h3 style={{ margin: "0 0 4px", fontFamily: serif, fontSize: 18, fontWeight: 600, lineHeight: 1.25 }}>{c.name}</h3>
+                    <div style={{ fontSize: 12, color: C.inkFaint, marginBottom: 8 }}>
+                      {c.start && c.end ? `${MONTHS[c.start - 1]}\u2013${MONTHS[c.end - 1]} ${c.year || ""}` : "Periode ikke satt"}
+                    </div>
+                    <div style={{ fontSize: 12.5, marginBottom: 10 }}>
+                      {c.ansvarlig
+                        ? <span style={{ color: C.ink }}>Ansvarlig: <strong style={{ fontWeight: 600 }}>{c.ansvarlig}</strong></span>
+                        : <span style={{ color: C.danger, fontWeight: 700 }}>&#9888; Uten ansvarlig</span>}
+                    </div>
+
+                    {(c.funnelEmphasis || []).length > 0 && (
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
+                        {c.funnelEmphasis.map((fk) => (
+                          <span key={fk} style={{ fontSize: 11, fontWeight: 600, color: C.inkSoft, background: C.surfaceAlt, border: `1px solid ${C.line}`, borderRadius: 999, padding: "2px 8px" }}>{FUNNEL_LABEL[fk] || fk}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {(c.categoryIds || []).length > 0 && (
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
+                        {c.categoryIds.map((id) => (
+                          <span key={id} style={{ fontSize: 11, fontWeight: 600, color: C.goldDeep, border: `1px dashed ${C.lineStrong}`, borderRadius: 999, padding: "2px 8px" }}>{catLabel(id)}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {g && <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 10 }}>&#8593; M&aring;l: <span style={{ fontWeight: 600, color: C.ink }}>{g.title}</span></div>}
+                    {c.brief?.mal && <p style={{ margin: "0 0 12px", fontSize: 12.5, color: C.inkSoft, lineHeight: 1.45 }}>{c.brief.mal}</p>}
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "10px 0", borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}`, marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: C.inkFaint, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 700 }}>Budsjett (plan)</div>
+                        <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 600, color: C.ink }}>{fmt(Number(c.budgetPlan) || 0, "kr")}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 11, color: C.inkFaint, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 700 }}>P&aring; aktiviteter</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: actBudget > (Number(c.budgetPlan) || 0) ? C.danger : C.inkSoft }}>{acts.length} stk &middot; {fmt(actBudget, "kr")}</div>
+                      </div>
+                    </div>
+
+                    {acts.length > 0 && (
+                      <div style={{ display: "grid", gap: 5, marginBottom: 12 }}>
+                        {acts.slice(0, 5).map((a) => (
+                          <button key={a.id} onClick={() => onEditActivity(a)} style={{ textAlign: "left", cursor: "pointer", border: "none", background: C.surfaceAlt, borderRadius: 8, padding: "6px 10px", display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", fontFamily: sans }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, color: C.ink, overflow: "hidden" }}>
+                              <span style={{ width: 7, height: 7, borderRadius: 999, background: OWNER_COLOR[a.owner] || C.gold, flexShrink: 0 }} />
+                              <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.title}</span>
+                            </span>
+                            <span style={{ fontSize: 11.5, color: C.inkFaint, whiteSpace: "nowrap" }}>{fmt(Number(a.budgetPlan) || 0, "kr")}</span>
+                          </button>
+                        ))}
+                        {acts.length > 5 && <div style={{ fontSize: 11.5, color: C.inkFaint, paddingLeft: 2 }}>+ {acts.length - 5} til</div>}
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: "auto" }}>
+                      <Btn small variant="ghost" onClick={() => onAddActivity(c.id)}>+ Aktivitet</Btn>
+                      <Btn small variant="ghost" onClick={() => onEdit(c)}>Rediger</Btn>
+                      <button onClick={() => onDelete(c.id)} style={{ marginLeft: "auto", border: "none", background: "none", color: C.inkFaint, cursor: "pointer", fontSize: 13 }}>Slett</button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const KPI_UNITS = ["kr", "stk", "%", "visn.", "leads", "%-poeng"];
+
+function CampaignModal({ data, goals, dimensions, members = [], onClose, onSave }) {
+  const [f, setF] = useState({
+    id: data.id,
+    name: data.name || "",
+    status: data.status || "planlagt",
+    owner: data.owner || "marked",
+    ansvarlig: data.ansvarlig || "",
+    market: data.market || (dimensions.markets[0]?.id || ""),
+    categoryIds: data.categoryIds || [],
+    goalId: data.goalId || "",
+    funnelEmphasis: data.funnelEmphasis || [],
+    year: data.year || 2026,
+    start: data.start || 1,
+    end: data.end || 12,
+    budgetPlan: data.budgetPlan ?? 0,
+    brief: { bakgrunn: "", mal: "", malgruppe: "", budskap: "", tilbud: "", ...(data.brief || {}) },
+    kpiTargets: data.kpiTargets || [],
+    results: data.results || { spend: 0, impressions: 0, leads: 0, conversions: 0, revenue: 0 }
+  });
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const setBrief = (k, v) => setF((p) => ({ ...p, brief: { ...p.brief, [k]: v } }));
+  const toggleArr = (k, v) => setF((p) => ({ ...p, [k]: p[k].includes(v) ? p[k].filter((x) => x !== v) : [...p[k], v] }));
+  const addKpi = () => setF((p) => ({ ...p, kpiTargets: [...p.kpiTargets, { label: "", unit: "kr", target: 0 }] }));
+  const setKpi = (i, k, v) => setF((p) => ({ ...p, kpiTargets: p.kpiTargets.map((row, x) => x === i ? { ...row, [k]: v } : row) }));
+  const delKpi = (i) => setF((p) => ({ ...p, kpiTargets: p.kpiTargets.filter((_, x) => x !== i) }));
+  const save = () => {
+    if (!f.name.trim()) return;
+    onSave({ ...f, start: Math.min(f.start, f.end), end: Math.max(f.start, f.end), budgetPlan: Number(f.budgetPlan) || 0 });
+  };
+  const sec = { fontSize: 11.5, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: C.inkFaint, margin: "18px 0 8px" };
+  return (
+    <Modal
+      title={data.id ? "Rediger kampanje" : "Ny kampanje"}
+      onClose={onClose}
+      footer={<><Btn variant="ghost" onClick={onClose}>Avbryt</Btn><Btn variant="primary" onClick={save}>Lagre</Btn></>}
+    >
+      <Field label="Kampanjenavn"><input style={inputStyle} value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="F.eks. Bad-sesong v\u00E5r 2026" /></Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Status"><select style={inputStyle} value={f.status} onChange={(e) => set("status", e.target.value)}>{CAMPAIGN_STATUS.map((s) => <option key={s}>{s}</option>)}</select></Field>
+        <Field label="Eier (avdeling)"><select style={inputStyle} value={f.owner} onChange={(e) => set("owner", e.target.value)}>{OWNERS.map((o) => <option key={o} value={o}>{OWNER_LABEL[o]}</option>)}</select></Field>
+      </div>
+      <Field label="Ansvarlig (person)" hint="vises p\u00E5 vedkommendes skrivebord i portalen">
+        <select style={inputStyle} value={f.ansvarlig} onChange={(e) => set("ansvarlig", e.target.value)}>
+          <option value="">&mdash; velg person &mdash;</option>
+          {f.ansvarlig && !members.some((m) => m.name === f.ansvarlig) && <option value={f.ansvarlig}>{f.ansvarlig} (ikke i listen)</option>}
+          {members.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+        </select>
+      </Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Marked"><select style={inputStyle} value={f.market} onChange={(e) => set("market", e.target.value)}><option value="">&mdash; ingen &mdash;</option>{dimensions.markets.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}</select></Field>
+        <Field label="Knyttet til m\u00E5l" hint="valgfritt"><select style={inputStyle} value={f.goalId} onChange={(e) => set("goalId", e.target.value)}><option value="">&mdash; ingen &mdash;</option>{goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</select></Field>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+        <Field label="\u00C5r"><input type="number" style={inputStyle} value={f.year} onChange={(e) => set("year", Number(e.target.value))} /></Field>
+        <Field label="Starter"><select style={inputStyle} value={f.start} onChange={(e) => set("start", Number(e.target.value))}>{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select></Field>
+        <Field label="Slutter"><select style={inputStyle} value={f.end} onChange={(e) => set("end", Number(e.target.value))}>{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select></Field>
+      </div>
+      <Field label="Budsjett (plan)"><input type="number" style={inputStyle} value={f.budgetPlan} onChange={(e) => set("budgetPlan", Number(e.target.value))} /></Field>
+
+      <div style={sec}>Traktvekt (See&ndash;Think&ndash;Do&ndash;Care)</div>
+      <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+        {FUNNEL.map((x) => <Chip key={x.key} active={f.funnelEmphasis.includes(x.key)} onClick={() => toggleArr("funnelEmphasis", x.key)}>{x.label} ({x.fw})</Chip>)}
+      </div>
+
+      <div style={sec}>Produktkategorier</div>
+      {dimensions.categories.length === 0
+        ? <div style={{ fontSize: 12.5, color: C.inkFaint, fontStyle: "italic" }}>Ingen kategorier definert enn&aring;. Legg dem inn under &laquo;Rediger dimensjoner&raquo;.</div>
+        : <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>{dimensions.categories.map((c) => <Chip key={c.id} active={f.categoryIds.includes(c.id)} onClick={() => toggleArr("categoryIds", c.id)}>{c.label}</Chip>)}</div>}
+
+      <div style={sec}>Brief</div>
+      {[["bakgrunn", "Bakgrunn / innsikt"], ["mal", "M\u00E5l med kampanjen"], ["malgruppe", "M\u00E5lgruppe"], ["budskap", "Hovedbudskap"], ["tilbud", "Tilbud / virkemiddel"]].map(([k, label]) => (
+        <Field key={k} label={label}><textarea style={{ ...inputStyle, minHeight: 52, resize: "vertical" }} value={f.brief[k]} onChange={(e) => setBrief(k, e.target.value)} /></Field>
+      ))}
+
+      <div style={{ ...sec, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>KPI-m\u00E5l</span>
+        <button onClick={addKpi} style={{ border: "none", background: "none", cursor: "pointer", color: C.gold, fontWeight: 700, fontSize: 12.5, fontFamily: sans }}>+ Legg til</button>
+      </div>
+      {f.kpiTargets.length === 0 && <div style={{ fontSize: 12.5, color: C.inkFaint, fontStyle: "italic" }}>Ingen KPI satt. Resultater m\u00E5les mot disse i Effekt-modulen.</div>}
+      {f.kpiTargets.map((row, i) => (
+        <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 90px 110px 32px", gap: 8, marginBottom: 8, alignItems: "center" }}>
+          <input style={inputStyle} value={row.label} onChange={(e) => setKpi(i, "label", e.target.value)} placeholder="KPI" />
+          <select style={inputStyle} value={row.unit} onChange={(e) => setKpi(i, "unit", e.target.value)}>{KPI_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
+          <input type="number" style={inputStyle} value={row.target} onChange={(e) => setKpi(i, "target", Number(e.target.value))} placeholder="M\u00E5l" />
+          <button onClick={() => delKpi(i)} style={{ border: "none", background: "none", cursor: "pointer", color: C.inkFaint, fontSize: 16 }}>&times;</button>
+        </div>
+      ))}
+    </Modal>
+  );
+}
+
+function DimEditor({ title, items, onChange, usage }) {
+  const [draft, setDraft] = useState("");
+  const add = () => { const v = draft.trim(); if (!v) return; onChange([...items, { id: uid("dim"), label: v }]); setDraft(""); };
+  const rename = (id, label) => onChange(items.map((x) => x.id === id ? { ...x, label } : x));
+  const remove = (id) => onChange(items.filter((x) => x.id !== id));
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: C.inkFaint, marginBottom: 8 }}>{title}</div>
+      <div style={{ display: "grid", gap: 6, marginBottom: 8 }}>
+        {items.length === 0 && <div style={{ fontSize: 12.5, color: C.inkFaint, fontStyle: "italic" }}>Tom &mdash; legg til under.</div>}
+        {items.map((it) => (
+          <div key={it.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input style={{ ...inputStyle, flex: 1 }} value={it.label} onChange={(e) => rename(it.id, e.target.value)} />
+            {usage && usage[it.id] > 0 && <span style={{ fontSize: 11.5, color: C.inkFaint, whiteSpace: "nowrap" }}>{usage[it.id]} i bruk</span>}
+            <button onClick={() => remove(it.id)} style={{ border: "none", background: "none", cursor: "pointer", color: C.inkFaint, fontSize: 16 }}>&times;</button>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input style={{ ...inputStyle, flex: 1 }} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder={`Ny ${title.toLowerCase()}\u2026`} />
+        <Btn small variant="ghost" onClick={add}>Legg til</Btn>
+      </div>
+    </div>
+  );
+}
+
+function DimensionsModal({ dimensions, campaigns, activities, onClose, onSave }) {
+  const [d, setD] = useState({
+    markets: dimensions.markets || [],
+    categories: dimensions.categories || [],
+    channels: dimensions.channels || []
+  });
+  const marketUsage = {};
+  (campaigns || []).forEach((c) => { if (c.market) marketUsage[c.market] = (marketUsage[c.market] || 0) + 1; });
+  const catUsage = {};
+  (campaigns || []).forEach((c) => (c.categoryIds || []).forEach((id) => { catUsage[id] = (catUsage[id] || 0) + 1; }));
+  return (
+    <Modal
+      title="Dimensjoner"
+      onClose={onClose}
+      footer={<><Btn variant="ghost" onClick={onClose}>Avbryt</Btn><Btn variant="primary" onClick={() => onSave(d)}>Lagre</Btn></>}
+    >
+      <p style={{ margin: "0 0 16px", fontSize: 12.5, color: C.inkSoft, lineHeight: 1.5 }}>Felles vokabular for hele markedsplanen &mdash; gjenbrukes av kampanjer, budsjett og kalender. Fyll inn de offisielle Vikingbad-kategoriene her.</p>
+      <DimEditor title="Marked" items={d.markets} usage={marketUsage} onChange={(v) => setD((p) => ({ ...p, markets: v }))} />
+      <DimEditor title="Kategori" items={d.categories} usage={catUsage} onChange={(v) => setD((p) => ({ ...p, categories: v }))} />
+      <DimEditor title="Kanal" items={d.channels} onChange={(v) => setD((p) => ({ ...p, channels: v }))} />
+    </Modal>
+  );
+}
+
+function nameResolves(name, members) {
+  const n = String(name || "").trim().toLowerCase();
+  if (!n) return false;
+  return (members || []).some((m) => {
+    const mn = String(m.name || "").trim().toLowerCase();
+    return mn === n || mn.split(" ")[0] === n.split(" ")[0];
+  });
+}
+
+function computeLooseEnds({ activities = [], tasks = [], handoffs = [], campaigns = [], goals = [], members = [] }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const overdueDate = (due, done) => !!due && !done && new Date(due) < today;
+  const unassigned = [];
+  const unresolved = [];
+  const consider = (kind, id, title, who, e) => {
+    const w = (who || "").trim();
+    if (!w) unassigned.push({ kind, id, title, e });
+    else if (!nameResolves(w, members)) unresolved.push({ kind, id, title, who: w, e });
+  };
+  activities.forEach((a) => consider("aktivitet", a.id, a.title, a.ansvarlig, a));
+  tasks.forEach((t) => consider("oppgave", t.id, t.title, t.ansvarlig, t));
+  campaigns.forEach((c) => { if (c.status !== "avlyst" && c.status !== "fullf\u00F8rt") consider("kampanje", c.id, c.name, c.ansvarlig, c); });
+
+  const openHandoffs = handoffs.filter((h) => h.status !== "levert").map((h) => ({
+    kind: "overlevering", id: h.id, title: h.description, e: h,
+    recipient: (h.toPerson || "").trim(),
+    noRecipient: !((h.toPerson || "").trim()) || !nameResolves(h.toPerson, members),
+    overdue: overdueDate(h.due, false), due: h.due
+  }));
+
+  const overdue = [
+    ...tasks.filter((t) => overdueDate(t.due, t.status === "fullf\u00F8rt")).map((t) => ({ kind: "oppgave", id: t.id, title: t.title, due: t.due, e: t })),
+    ...handoffs.filter((h) => overdueDate(h.due, h.status === "levert")).map((h) => ({ kind: "overlevering", id: h.id, title: h.description, due: h.due, e: h }))
+  ];
+
+  const budgetOver = campaigns.map((c) => {
+    const spend = activities.filter((a) => a.campaignId === c.id).reduce((s, a) => s + (Number(a.budgetPlan) || 0), 0);
+    return { c, spend, plan: Number(c.budgetPlan) || 0 };
+  }).filter((x) => x.plan > 0 && x.spend > x.plan);
+
+  const orphans = [
+    ...activities.filter((a) => !a.goalId).map((a) => ({ kind: "aktivitet", id: a.id, title: a.title, issue: "uten m\u00E5l", e: a })),
+    ...activities.filter((a) => !a.campaignId).map((a) => ({ kind: "aktivitet", id: a.id, title: a.title, issue: "uten kampanje", e: a })),
+    ...tasks.filter((t) => !t.activityId).map((t) => ({ kind: "oppgave", id: t.id, title: t.title, issue: "uten aktivitet", e: t }))
+  ];
+
+  const problemHandoffs = openHandoffs.filter((h) => h.noRecipient || h.overdue).length;
+  const total = unassigned.length + unresolved.length + problemHandoffs + overdue.length + budgetOver.length;
+  return { unassigned, unresolved, openHandoffs, overdue, budgetOver, orphans, total };
+}
+
+const KIND_TONE = { aktivitet: C.marked, oppgave: C.salg, kampanje: C.goldDeep, overlevering: C.felles };
+const KIND_WASH = { aktivitet: C.markedWash, oppgave: C.salgWash, kampanje: C.goldWash, overlevering: C.fellesWash };
+
+function LooseEndsBanner({ count, onClick }) {
+  return (
+    <button onClick={onClick} style={{ width: "100%", textAlign: "left", cursor: "pointer", fontFamily: sans, display: "flex", alignItems: "center", gap: 12, background: C.rustWash, border: `1px solid ${C.danger}`, borderRadius: 12, padding: "12px 16px", marginBottom: 18 }}>
+      <span style={{ fontSize: 18 }}>&#9888;</span>
+      <span style={{ flex: 1, fontSize: 13.5, color: C.ink }}>
+        <strong style={{ fontWeight: 700 }}>{count} l\u00F8se tr\u00E5der</strong> i markedsplanen &mdash; ansvar eller koblinger som kan ligge gjemt.
+      </span>
+      <span style={{ fontSize: 12.5, fontWeight: 700, color: C.danger, whiteSpace: "nowrap" }}>Flyt &amp; kontroll &rarr;</span>
+    </button>
+  );
+}
+
+function LERow({ row, issue, tone, onFix }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: C.surface, border: `1px solid ${C.line}`, borderLeft: `3px solid ${tone}`, borderRadius: 9, marginBottom: 6 }}>
+      <Badge color={KIND_TONE[row.kind] || C.inkSoft} wash={KIND_WASH[row.kind] || C.surfaceAlt}>{row.kind}</Badge>
+      <span style={{ flex: 1, fontSize: 13.5, color: C.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.title || <em style={{ color: C.inkFaint }}>uten tittel</em>}</span>
+      {issue && <span style={{ fontSize: 12, color: tone, fontWeight: 600, whiteSpace: "nowrap" }}>{issue}</span>}
+      {onFix && <Btn small variant="ghost" onClick={onFix}>Fiks</Btn>}
+    </div>
+  );
+}
+
+function LESection({ title, hint, tone, children }) {
+  return (
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+        <span style={{ width: 9, height: 9, borderRadius: 3, background: tone }} />
+        <h3 style={{ margin: 0, fontFamily: serif, fontSize: 16, fontWeight: 600 }}>{title}</h3>
+      </div>
+      {hint && <p style={{ margin: "0 0 10px 19px", fontSize: 12.5, color: C.inkSoft }}>{hint}</p>}
+      <div style={{ paddingLeft: 19 }}>{children}</div>
+    </div>
+  );
+}
+
+function FlytKontrollView({ looseEnds, onEditActivity, onEditTask, onEditCampaign, onEditHandoff }) {
+  const fixer = (row) => {
+    const e = row.e;
+    if (row.kind === "aktivitet") return () => onEditActivity(e);
+    if (row.kind === "oppgave") return () => onEditTask(e);
+    if (row.kind === "kampanje") return () => onEditCampaign(e);
+    if (row.kind === "overlevering") return () => onEditHandoff(e);
+    return undefined;
+  };
+  const le = looseEnds;
+  const clean = le.total === 0;
+  const stats = [
+    { n: le.unassigned.length, l: "uten ansvarlig", tone: C.danger },
+    { n: le.unresolved.length, l: "ukoblet ansvarlig", tone: C.danger },
+    { n: le.openHandoffs.filter((h) => h.noRecipient || h.overdue).length, l: "overleveringer i fare", tone: C.pagaar },
+    { n: le.overdue.length, l: "forfalt", tone: C.danger },
+    { n: le.budgetOver.length, l: "budsjettsprekk", tone: C.pagaar }
+  ];
+  return (
+    <div>
+      <Toolbar title="Flyt & kontroll" subtitle={"Fanger opp alt som kan henge eller ligge gjemt \u2014 uten ansvar, uten match til et medlem, \u00E5pne overleveringer, forfalt og budsjettsprekk. Alt med ansvarlig vises automatisk p\u00E5 vedkommendes skrivebord i portalen."} />
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 20 }}>
+        {stats.map((s, i) => (
+          <div key={i} style={{ background: C.surface, border: `1px solid ${C.line}`, borderTop: `3px solid ${s.n > 0 ? s.tone : C.fullfort}`, borderRadius: 10, padding: "12px 14px" }}>
+            <div style={{ fontFamily: serif, fontSize: 26, fontWeight: 600, color: s.n > 0 ? s.tone : C.fullfort, lineHeight: 1 }}>{s.n}</div>
+            <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 3 }}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {clean && (
+        <Card style={{ padding: 22, textAlign: "center", background: C.fullfortWash, border: `1px solid ${C.fullfort}` }}>
+          <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 600, color: C.ink, marginBottom: 4 }}>&#10003; Alt henger sammen</div>
+          <div style={{ fontSize: 13, color: C.inkSoft }}>Ingen poster uten ansvar, ingen forfalte overleveringer, ingen budsjettsprekk. Alt med ansvarlig flyter til portalen.</div>
+        </Card>
+      )}
+
+      {le.unassigned.length > 0 && (
+        <LESection title="Uten ansvarlig" tone={C.danger} hint="Ingen person satt &mdash; vises ikke for noen. Sett en ansvarlig.">
+          {le.unassigned.map((r) => <LERow key={r.kind + r.id} row={r} tone={C.danger} onFix={fixer(r)} />)}
+        </LESection>
+      )}
+
+      {le.unresolved.length > 0 && (
+        <LESection title="Ansvarlig matcher ikke et medlem" tone={C.danger} hint="Navnet finnes ikke i medlemslisten, s&aring; posten n&aring;r ingen sitt skrivebord. Velg person fra listen.">
+          {le.unresolved.map((r) => <LERow key={r.kind + r.id} row={r} issue={`\u201C${r.who}\u201D`} tone={C.danger} onFix={fixer(r)} />)}
+        </LESection>
+      )}
+
+      {le.openHandoffs.length > 0 && (
+        <LESection title="&Aring;pne overleveringer" tone={C.pagaar} hint="Staffettpinnen er fortsatt i lufta. Med en mottaker som matcher, ligger den p&aring; vedkommendes skrivebord.">
+          {le.openHandoffs.map((r) => (
+            <LERow key={r.kind + r.id} row={r} tone={r.noRecipient || r.overdue ? C.danger : C.pagaar} onFix={() => onEditHandoff(r.e)}
+              issue={r.noRecipient ? "mottaker mangler/ukoblet" : r.overdue ? "forfalt " + (r.due || "") : "til " + r.recipient} />
+          ))}
+        </LESection>
+      )}
+
+      {le.overdue.length > 0 && (
+        <LESection title="Forfalt" tone={C.danger} hint="Frist passert og ikke fullf&oslash;rt.">
+          {le.overdue.map((r) => <LERow key={r.kind + r.id} row={r} issue={"frist " + (r.due || "")} tone={C.danger} onFix={fixer(r)} />)}
+        </LESection>
+      )}
+
+      {le.budgetOver.length > 0 && (
+        <LESection title="Budsjettsprekk" tone={C.pagaar} hint="Aktivitetsbudsjettet overstiger kampanjens ramme.">
+          {le.budgetOver.map((x) => (
+            <LERow key={"b" + x.c.id} row={{ kind: "kampanje", id: x.c.id, title: x.c.name }} tone={C.pagaar} onFix={() => onEditCampaign(x.c)}
+              issue={`${fmt(x.spend, "kr")} av ${fmt(x.plan, "kr")}`} />
+          ))}
+        </LESection>
+      )}
+
+      {le.orphans.length > 0 && (
+        <LESection title="L&oslash;se koblinger" tone={C.amber} hint="R&aring;dgivende &mdash; svekker sporbarheten, men stopper ikke flyten.">
+          {le.orphans.map((r, i) => <LERow key={r.kind + r.id + i} row={r} issue={r.issue} tone={C.amber} onFix={fixer(r)} />)}
+        </LESection>
+      )}
+    </div>
+  );
 }
 
 export default MarkedsplanVerktoy;

@@ -5920,14 +5920,16 @@ const App = ({ identity }) => {
   const markedsplanAssignments = useMemo(() => {
     const mp = markedsplanData || {};
     const rows = [];
-    (mp.activities || []).forEach(a => { if ((a.ansvarlig || '').trim()) rows.push({ ext: 'a:' + a.id, e: a, due: '', kind: 'aktivitet' }); });
-    (mp.tasks || []).forEach(t => { if ((t.ansvarlig || '').trim()) rows.push({ ext: 'o:' + t.id, e: t, due: t.due || '', kind: 'oppgave' }); });
+    (mp.activities || []).forEach(a => { if ((a.ansvarlig || '').trim()) rows.push({ ext: 'a:' + a.id, e: a, who: a.ansvarlig, status: a.status, owner: a.owner, title: a.title, due: '', kind: 'aktivitet' }); });
+    (mp.tasks || []).forEach(t => { if ((t.ansvarlig || '').trim()) rows.push({ ext: 'o:' + t.id, e: t, who: t.ansvarlig, status: t.status, owner: t.owner, title: t.title, due: t.due || '', kind: 'oppgave' }); });
+    (mp.campaigns || []).forEach(c => { if ((c.ansvarlig || '').trim() && c.status !== 'avlyst') rows.push({ ext: 'k:' + c.id, e: c, who: c.ansvarlig, status: c.status, owner: c.owner, title: 'Kampanje: ' + c.name, due: '', kind: 'kampanje' }); });
+    (mp.handoffs || []).forEach(h => { const who = (h.toPerson || '').trim(); if (who && h.status !== 'levert') rows.push({ ext: 'h:' + h.id, e: h, who, status: h.status, owner: h.to, title: 'Overlevering: ' + (h.description || ''), due: h.due || '', kind: 'overlevering' }); });
     return rows.map(r => ({
-      id: r.ext, external_id: r.ext, title: r.e.title,
-      owner: resolveMemberId(r.e.ansvarlig), ownerName: r.e.ansvarlig,
-      status: mpStatusToPortal(r.e.status), dueDate: r.due,
+      id: r.ext, external_id: r.ext, title: r.title,
+      owner: resolveMemberId(r.who), ownerName: r.who,
+      status: mpStatusToPortal(r.status), dueDate: r.due,
       priority: 'medium', source: 'markedsplan', mpKind: r.kind,
-      portal: MP_OWNER_TO_PORTAL[r.e.owner] || 'leadership',
+      portal: MP_OWNER_TO_PORTAL[r.owner] || 'leadership',
     }));
   }, [markedsplanData, allData]);
 
