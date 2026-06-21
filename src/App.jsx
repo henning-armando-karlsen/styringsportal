@@ -746,11 +746,10 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
   const sections = [
     { label: null, items: [
       { key:'home',       label:'Hjem',            icon:Home },
-      { key:'integrasjoner', label:'E-post og kalender', icon:Mail },
+      { key:'kalender',   label:'E-post og kalender', icon:Mail },
       { key:'innboks',    label:'Innboks',         icon:Bell, count:counts.innboks },
       { key:'desk',       label:'Mitt skrivebord', icon:LayoutDashboard },
       { key:'flyt',       label:'Flyt & kontroll', icon:Activity, count:counts.flyt },
-      { key:'kalender',   label:'Kalender',        icon:CalendarClock },
       { key:'crossorg',   label:'På tvers',        icon:Command, count:counts.crossorg },
     ]},
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
@@ -4547,6 +4546,25 @@ const IntegrationsView = ({ userName }) => {
   );
 };
 
+const KalenderOgEpost = ({ data, allData, currentUserId, markedsplanTasks, sortimentTasks, onNavigate, onSaveEvents, activePortal, userName }) => {
+  const [tab, setTab] = useState('kalender');
+  const tabs = [['kalender','Kalender'],['tilkobling','Tilkobling']];
+  return (
+    <div>
+      <div style={{display:'flex',gap:2,marginBottom:18,borderBottom:`1px solid ${theme.border}`}}>
+        {tabs.map(([k,l])=>(
+          <button key={k} onClick={()=>setTab(k)} style={{fontFamily:'inherit',fontSize:13.5,fontWeight:600,cursor:'pointer',border:'none',background:'none',padding:'10px 14px',color:tab===k?theme.ink:theme.inkMuted,borderBottom:tab===k?`2px solid ${theme.brass}`:'2px solid transparent',marginBottom:-1}}>{l}</button>
+        ))}
+      </div>
+      {tab==='kalender' ? (
+        <CalendarView data={data} allData={allData} currentUserId={currentUserId} markedsplanTasks={markedsplanTasks} sortimentTasks={sortimentTasks} onNavigate={onNavigate} onSaveEvents={onSaveEvents} activePortal={activePortal}/>
+      ) : (
+        <IntegrationsView userName={userName}/>
+      )}
+    </div>
+  );
+};
+
 const InboxView = ({ items=[], unreadMessages=0, onNavigate, onAsk }) => {
   const danger = '#C2502B', warn = '#8B6914';
   const tierMeta = {
@@ -6379,13 +6397,12 @@ const App = ({ identity }) => {
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} unifiedTasks={unifiedMyWork} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')} sortimentTasks={sortimentAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
         {view==='flyt'        && <FlytKontrollGlobal looseEnds={orgLooseEnds} onNavigate={handleNavigate}/>}
         {view==='innboks'     && <InboxView items={inboxItems} unreadMessages={totalUnread(data, currentUserId)} onNavigate={handleNavigate} onAsk={()=>setAssistantOpen(true)}/>}
-        {view==='integrasjoner' && <IntegrationsView userName={(data.members.find(m=>m.id===currentUserId)||{}).name}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='arshjul'    && <ArshjulView data={data} save={save} currentUserId={currentUserId} />}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
         {view==='markedsplan' && <MarkedsplanView data={markedsplanData} onChange={saveMarkedsplan} onPushToPortal={handlePushToPortal} members={markedsplanMembers} embedded={true}/>}
         {view==='kalender' && (
-          <CalendarView
+          <KalenderOgEpost
             data={data}
             allData={allData}
             currentUserId={currentUserId}
@@ -6394,6 +6411,7 @@ const App = ({ identity }) => {
             onNavigate={handleNavigate}
             onSaveEvents={(next) => save({ ...data, calendarEvents: next })}
             activePortal={activePortal}
+            userName={(data.members.find(m=>m.id===currentUserId)||{}).name}
           />
         )}
         {view==='initiatives' && <InitiativesView   data={data} save={save}/>}
