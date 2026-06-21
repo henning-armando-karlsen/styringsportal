@@ -14,7 +14,7 @@
 
 const PORTAL_LABEL = {
   leadership: 'Ledelse', marketing: 'Marked', sales: 'Salg',
-  innkjop: 'Innkjøp', produkt: 'Produkt',
+  innkjop: 'Innkjøp', produkt: 'Produkt', ikt: 'IKT',
 };
 
 function daysFrom(iso) {
@@ -47,7 +47,7 @@ function nameFor(allData, id) {
 //   portal, portalLabel, view, source, ...flagg }
 export function collectOwnership({
   allData = {}, forumData = {}, crossorgData = {},
-  markedsplanAssignments = [], sortimentAssignments = [],
+  markedsplanAssignments = [], sortimentAssignments = [], iktAssignments = [],
 } = {}) {
   const out = [];
   const add = (o) => out.push(o);
@@ -142,13 +142,21 @@ export function collectOwnership({
     view: 'sortiment', source: 'sortiment', unresolvedName: !a.owner && !!a.ownerName, link: a.link || '',
   }));
 
+  // ── IKT-plan (allerede normalisert i App) ──
+  (iktAssignments || []).forEach((a) => add({
+    uid: `ikt:${a.external_id || a.id}`, kind: a.iktKind || 'oppgave', label: a.label || 'IKT', title: a.title,
+    owner: a.owner || null, ownerName: a.ownerName || '', status: a.status, done: !!a.done,
+    dueDate: a.dueDate || '', portal: 'ikt', portalLabel: 'IKT',
+    view: 'iktplan', source: 'ikt', unresolvedName: !a.owner && !!a.ownerName,
+  }));
+
   // Fyll inn eiernavn der det mangler.
   out.forEach((o) => { if (!o.ownerName) o.ownerName = nameFor(allData, o.owner); });
   return out;
 }
 
 // Oppgave-lignende enheter som hører hjemme i "Mine oppgaver".
-const TASK_KINDS = new Set(['oppgave', 'aktivitet', 'kampanje', 'overlevering', 'sortiment']);
+const TASK_KINDS = new Set(['oppgave', 'aktivitet', 'kampanje', 'overlevering', 'sortiment', 'leveranse']);
 
 // A — alt en person eier som fortsatt er åpent, komplett og på tvers.
 export function myWork(items = [], currentUserId) {

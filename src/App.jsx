@@ -4,6 +4,7 @@ import { SUPABASE_ENABLED, loadAllPortals, savePortalContent } from './lib/dataS
 import AdminPanel, { checkIsAdmin } from './components/AdminPanel';
 import ProjectsView from './components/ProjectsView';
 import MarkedsplanView from './components/MarkedsplanView';
+import IktPlanView from './components/IktPlanView';
 import HomeView from './components/HomeView';
 import DirectoryView from './components/DirectoryView';
 import OrgChartView from './components/OrgChartView';
@@ -479,9 +480,42 @@ const seedProdukt = () => {
 };
 
 /* ===== PORTALREGISTER & TILGANGSSTYRING ===== */
+const seedIkt = () => ({
+  initialized: true,
+  org: {
+    portalId: 'ikt', portalName: 'IKT', orgName: 'IKT',
+    teamLabel: 'IKT', teamOverline: 'IT-utvikling og drift',
+    groupNoun: 'teamet', meetingNoun: 'IKT-møte', meetingNounDef: 'IKT-møtene',
+    sectionStrategy: 'Plan & portefølje', navPlans: 'Kalender', navInitiatives: 'Leveranser', navTeam: 'IKT',
+    plansTitle: 'IKT-kalender', plansOverline: 'Utvikling, drift og leveranser · 12 måneder',
+    initiativeTitle: 'Leveranser', initiativeOverline: 'Leveranseportefølje', initiativeNewBtn: 'Ny leveranse', initiativeNoun: 'leveranse',
+    initiativeEmpty: 'Leveranser er større IKT-satsninger med egen tidslinje og milepæler. Her holder dere oversikt over alt som er i gang.',
+    proposalsOverline: 'Saker til IKT-møtene', messagesOverline: 'Internt rom for IKT-teamet',
+    decisionsSub: 'Logg over vedtak i IKT', deskFooter: 'Vikingbad IKT',
+    assistantScope: 'Vikingbads IKT-portal', assistantContextHeader: 'IKT-TEAMET',
+    tip: 'Hold behov, prioritering og leveransestatus oppdatert. Bruk «Brief meg» før IKT-møter.',
+    planCategories: {
+      utvikling:      { label: 'Utvikling',        color: '#1E4E66', bg: '#E5EFF3' },
+      drift:          { label: 'Drift',            color: '#5C7B8A', bg: '#E0E8EB' },
+      integrasjon:    { label: 'Integrasjon',      color: '#6B5B95', bg: '#ECE8F2' },
+      infrastruktur:  { label: 'Infrastruktur',    color: '#5C4A3A', bg: '#EBE4D9' },
+      sikkerhet:      { label: 'Sikkerhet',        color: '#9B4836', bg: '#F3E0D8' },
+      data:          { label: 'Data & innsikt',   color: '#557758', bg: '#E5EEE3' },
+    },
+  },
+  members: [
+    { id: 'henning', name: 'Henning Karlsen', role: 'Rådgiver / prosjekteier', email: '', initials: 'HK' },
+    { id: 'iktleder', name: 'IKT-leder', role: 'Leder IKT', email: '', initials: 'IL' },
+    { id: 'iktutv', name: 'Systemansvarlig', role: 'Utvikling og integrasjon', email: '', initials: 'SA' },
+  ],
+  meetings: [], decisions: [], tasks: [], documents: [], plans: [], initiatives: [],
+  projects: [], kpis: [], risks: [], agendaProposals: [], channels: [], messages: [], readState: {},
+});
+
+/* ===== TILGANGSSTYRING ===== */
 const portalAccess = {
   svk:['leadership'], tm:['leadership'], eh:['leadership'], om:['leadership'],
-  henning:['leadership','marketing','sales','innkjop','produkt'],
+  henning:['leadership','marketing','sales','innkjop','produkt','ikt'],
   elh:['leadership'], hba:['leadership'],
   ak:['leadership','marketing'],
   ghl:['leadership','sales'],
@@ -490,6 +524,7 @@ const portalAccess = {
   svb:['marketing'], sa:['marketing'], kfs:['marketing'], cb:['marketing'], eg:['marketing'], aj:['marketing'], er:['marketing'],
   mo:['sales'], sms:['sales'], ah:['sales'], cewh:['sales'], ie:['sales'], tn:['sales'], tmlo:['sales'], vs:['sales'], pop:['sales'], at:['sales'],
   tpj:['produkt'], po:['produkt'],
+  iktleder:['ikt'], iktutv:['ikt'],
 };
 const portalMeta = {
   leadership: { id:'leadership', name:'Ledergruppen',     subtitle:'Fellesportal', desc:'Strategi, beslutninger og styring', icon:'shield',    restricted:true  },
@@ -497,6 +532,7 @@ const portalMeta = {
   sales:      { id:'sales',      name:'Salgsavdelingen',   subtitle:'Salgsportal',       desc:'Pipeline, forhandlere og ordre',    icon:'trending',  restricted:false },
   innkjop:    { id:'innkjop',    name:'Innkjøpsavdelingen',subtitle:'Innkjøpsportal',    desc:'Leverandører, kontrakter og forsyning', icon:'clipboard', restricted:false },
   produkt:    { id:'produkt',    name:'Produkt & Sourcing',subtitle:'Produkt & Sourcing',desc:'Utvikling, design, lansering og leverandørkjede', icon:'compass', restricted:false },
+  ikt:        { id:'ikt',        name:'IKT',               subtitle:'IKT-portal',        desc:'IT-utvikling, drift og leveranser', icon:'cpu', restricted:false },
 };
 
 /* ===== MØTEFORA (tverrgående grupper) ===== */
@@ -676,7 +712,7 @@ const FilterTabs = ({ value, onChange, options }) => (
 );
 
 /* ===== PORTAL SWITCHER (dropdown for 4+, pill row for 2-3) ===== */
-const portalNav = (pid) => ({ leadership:{Icon:ShieldAlert,label:'Ledelse'}, marketing:{Icon:Megaphone,label:'Marked'}, sales:{Icon:TrendingUp,label:'Salg'}, innkjop:{Icon:ClipboardList,label:'Innkjøp'}, produkt:{Icon:Compass,label:'Produkt'} }[pid] || {Icon:LayoutDashboard,label:portalMeta[pid]?.name||pid});
+const portalNav = (pid) => ({ leadership:{Icon:ShieldAlert,label:'Ledelse'}, marketing:{Icon:Megaphone,label:'Marked'}, sales:{Icon:TrendingUp,label:'Salg'}, innkjop:{Icon:ClipboardList,label:'Innkjøp'}, produkt:{Icon:Compass,label:'Produkt'}, ikt:{Icon:Activity,label:'IKT'} }[pid] || {Icon:LayoutDashboard,label:portalMeta[pid]?.name||pid});
 
 const PortalSwitcher = ({ availablePortals, activePortal, onSwitchPortal }) => {
   const [dropOpen, setDropOpen] = useState(false);
@@ -754,6 +790,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
     ]},
     { label: org.sectionStrategy || 'Strategi & Plan', items: [
       ...((activePortal === 'marketing' || activePortal === 'sales') ? [{ key:'markedsplan', label:'Markedsplan', icon:Target }] : []),
+      ...(activePortal === 'ikt' ? [{ key:'iktplan', label:'IKT-plan', icon:Activity }] : []),
       { key:'arshjul',     label:'Årshjul', icon:Repeat },
       ...(activePortal !== 'leadership' ? [{ key:'plans', label: activePortal === 'marketing' ? 'Innholdskalender' : (org.navPlans || 'Plan'), icon:Compass, count:counts.plans }] : []),
       { key:'initiatives', label:org.navInitiatives || 'Initiativer', icon:Briefcase,  count:counts.initiatives },
@@ -6114,8 +6151,10 @@ const App = ({ identity }) => {
   const [salesData, setSalesData]           = useState(seedSales);
   const [innkjopData, setInnkjopData]       = useState(seedInnkjop);
   const [produktData, setProduktData]       = useState(seedProdukt);
+  const [iktData, setIktData]               = useState(seedIkt);
   const [crossorgData, setCrossorgData]     = useState({ projects: [] });
   const [markedsplanData, setMarkedsplanData] = useState({});
+  const [iktPlanData, setIktPlanData] = useState({});
   const [sortimentData, setSortimentData] = useState({});
   const [currentUserId, setCurrentUserId]   = useState(null);
   const [activePortal, setActivePortal]     = useState(null);
@@ -6136,9 +6175,9 @@ const App = ({ identity }) => {
   useEffect(() => {
     if (!SUPABASE_ENABLED) return;
     const forumSeeds = {}; FORUM_IDS.forEach(fid => { forumSeeds[fid] = emptyForumData(fid); });
-    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), crossorg: { projects: [] }, markedsplan: {}, sortiment: {}, ...forumSeeds })
+    loadAllPortals({ leadership: seedData(), marketing: seedMarketing(), sales: seedSales(), innkjop: seedInnkjop(), produkt: seedProdukt(), ikt: seedIkt(), crossorg: { projects: [] }, markedsplan: {}, sortiment: {}, iktplan: {}, ...forumSeeds })
       .then(all => {
-        setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.crossorg) setCrossorgData(all.crossorg); if(all.markedsplan) setMarkedsplanData(all.markedsplan); if(all.sortiment) setSortimentData(all.sortiment);
+        setLeadershipData(all.leadership); setMarketingData(all.marketing); setSalesData(all.sales); setInnkjopData(all.innkjop); setProduktData(all.produkt); if(all.ikt) setIktData(all.ikt); if(all.crossorg) setCrossorgData(all.crossorg); if(all.markedsplan) setMarkedsplanData(all.markedsplan); if(all.sortiment) setSortimentData(all.sortiment); if(all.iktplan) setIktPlanData(all.iktplan);
         const fd = {}; FORUM_IDS.forEach(fid => { if(all[fid]) fd[fid] = all[fid]; }); setForumData(fd);
       })
       .catch(err => console.error('Supabase: lasting feilet', err));
@@ -6158,7 +6197,7 @@ const App = ({ identity }) => {
   useEffect(() => {
     if (!identity || !activePortal) return;
     if (memberInjectedRef.current[activePortal]) return;
-    const storeMap = { leadership:[leadershipData,setLeadershipData], marketing:[marketingData,setMarketingData], sales:[salesData,setSalesData], innkjop:[innkjopData,setInnkjopData], produkt:[produktData,setProduktData] };
+    const storeMap = { leadership:[leadershipData,setLeadershipData], marketing:[marketingData,setMarketingData], sales:[salesData,setSalesData], innkjop:[innkjopData,setInnkjopData], produkt:[produktData,setProduktData], ikt:[iktData,setIktData] };
     const storeEntry = storeMap[activePortal];
     if (!storeEntry) return;
     const [portalData, setPortalData] = storeEntry;
@@ -6178,13 +6217,15 @@ const App = ({ identity }) => {
     sales:      [salesData,      setSalesData],
     innkjop:    [innkjopData,    setInnkjopData],
     produkt:    [produktData,    setProduktData],
+    ikt:        [iktData,        setIktData],
   };
   const data = (stores[activePortal] || stores.leadership)[0];
   const rawSave = (stores[activePortal] || stores.leadership)[1];
   const save = (newData) => { rawSave(newData); if (SUPABASE_ENABLED && activePortal) savePortalContent(activePortal, newData).catch(err => console.error('Supabase: lagring feilet', err)); };
   const saveCrossorg = (newData) => { setCrossorgData(newData); if (SUPABASE_ENABLED) savePortalContent('crossorg', newData).catch(err => console.error('Supabase: crossorg lagring feilet', err)); };
   const saveMarkedsplan = (next) => { setMarkedsplanData(next); if (SUPABASE_ENABLED) savePortalContent('markedsplan', next).catch(err => console.error('Supabase: markedsplan lagring feilet', err)); };
-  const allData = { leadership:leadershipData, marketing:marketingData, sales:salesData, innkjop:innkjopData, produkt:produktData };
+  const saveIktPlan = (next) => { setIktPlanData(next); if (SUPABASE_ENABLED) savePortalContent('iktplan', next).catch(err => console.error('Supabase: iktplan lagring feilet', err)); };
+  const allData = { leadership:leadershipData, marketing:marketingData, sales:salesData, innkjop:innkjopData, produkt:produktData, ikt:iktData };
 
   const MP_OWNER_TO_PORTAL = { marked: 'marketing', salg: 'sales', felles: 'leadership' };
   const mpStatusToPortal = (s) => s === 'fullført' ? 'fullført' : s === 'pågår' ? 'pågår' : 'ikke_startet';
@@ -6247,6 +6288,19 @@ const App = ({ identity }) => {
       sortType: it.type, link: it.link || '',
     }));
   }, [sortimentData, allData]);
+
+  const iktMembers = useMemo(() => ((iktData && iktData.members) || []).map(m => ({ id: m.id, name: m.name })), [iktData]);
+  const iktAssignments = useMemo(() => {
+    const ip = iktPlanData || {};
+    const rows = [];
+    (ip.leveranser || []).forEach(l => { if ((l.owner || '').trim() && l.status !== 'parkert') rows.push({ ext: 'l:' + l.id, title: l.title, owner: l.owner, status: l.status, due: l.end || '', kind: 'leveranse', label: 'IKT-leveranse', done: l.status === 'levert' }); });
+    (ip.oppgaver || []).forEach(o => { if ((o.owner || '').trim()) rows.push({ ext: 'o:' + o.id, title: o.title, owner: o.owner, status: o.status, due: o.dueDate || '', kind: 'oppgave', label: 'IKT-oppgave', done: o.status === 'fullført' }); });
+    return rows.map(r => ({
+      id: r.ext, external_id: r.ext, title: r.title,
+      owner: resolveMemberId(r.owner), ownerName: r.owner,
+      status: r.status, done: r.done, dueDate: r.due, iktKind: r.kind, label: r.label,
+    }));
+  }, [iktPlanData, allData]);
 
   const handlePushToPortal = async (items) => {
     if (!SUPABASE_ENABLED) return { ok: true, mode: 'dry-run', count: (items || []).length };
@@ -6323,8 +6377,8 @@ const App = ({ identity }) => {
   }, [currentUserId, activePortal]);
 
   const coherenceItems = useMemo(
-    () => collectOwnership({ allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments }),
-    [allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments]
+    () => collectOwnership({ allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments, iktAssignments }),
+    [allData, forumData, crossorgData, markedsplanAssignments, sortimentAssignments, iktAssignments]
   );
   const unifiedMyWork = useMemo(() => myWork(coherenceItems, currentUserId), [coherenceItems, currentUserId]);
   const orgLooseEnds = useMemo(
@@ -6401,6 +6455,7 @@ const App = ({ identity }) => {
         {view==='arshjul'    && <ArshjulView data={data} save={save} currentUserId={currentUserId} />}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
         {view==='markedsplan' && <MarkedsplanView data={markedsplanData} onChange={saveMarkedsplan} onPushToPortal={handlePushToPortal} members={markedsplanMembers} embedded={true}/>}
+        {view==='iktplan' && <IktPlanView data={iktPlanData} onChange={saveIktPlan} members={iktMembers} embedded={true}/>}
         {view==='kalender' && (
           <KalenderOgEpost
             data={data}
