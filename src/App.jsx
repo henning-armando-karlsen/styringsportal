@@ -10,7 +10,7 @@ import OrgChartView from './components/OrgChartView';
 import CalendarView from './components/CalendarView';
 import ArshjulView from './components/ArshjulView';
 import { supabase } from './lib/supabase.js';
-import { collectOwnership, myWork, looseEnds, globalMemberIds } from './lib/coherence';
+import { collectOwnership, myWork, looseEnds, globalMemberIds, inbox } from './lib/coherence';
 
 /* ===== ICONS (inline lucide-style SVGs) ===== */
 const ico = (paths) => ({ size = 16, style = {}, ...rest }) => (
@@ -746,6 +746,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
   const sections = [
     { label: null, items: [
       { key:'home',       label:'Hjem',            icon:Home },
+      { key:'innboks',    label:'Innboks',         icon:Bell, count:counts.innboks },
       { key:'desk',       label:'Mitt skrivebord', icon:LayoutDashboard },
       { key:'flyt',       label:'Flyt & kontroll', icon:Activity, count:counts.flyt },
       { key:'kalender',   label:'Kalender',        icon:CalendarClock },
@@ -4460,6 +4461,62 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
 };
 
 /* ===== MITT SKRIVEBORD ===== */
+const InboxView = ({ items=[], unreadMessages=0, onNavigate, onAsk }) => {
+  const danger = '#C2502B', warn = '#8B6914';
+  const tierMeta = {
+    0: { label: 'Forfalt', tone: danger },
+    1: { label: 'Krever handling', tone: warn },
+    2: { label: 'Forfaller snart', tone: theme.brass },
+  };
+  const groups = [0,1,2].map(t => ({ t, ...tierMeta[t], rows: items.filter(i => i.tier === t) })).filter(g => g.rows.length);
+  const empty = items.length === 0 && unreadMessages === 0;
+  const Row = ({ o }) => (
+    <div onClick={()=>onNavigate && onNavigate(o.view)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:theme.surface,border:`1px solid ${theme.border}`,borderLeft:`3px solid ${tierMeta[o.tier].tone}`,borderRadius:9,marginBottom:6,cursor:'pointer'}}>
+      <Pill bg={theme.surfaceAlt} color={theme.inkSoft}>{o.label || o.kind}</Pill>
+      <span style={{flex:1,fontSize:13.5,color:theme.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.title || <em style={{color:theme.inkMuted}}>uten tittel</em>}</span>
+      <span style={{fontSize:11.5,color:theme.inkMuted,whiteSpace:'nowrap'}}>{o.portalLabel}</span>
+      <span style={{fontSize:12,color:tierMeta[o.tier].tone,fontWeight:600,whiteSpace:'nowrap'}}>{o.reason}{o.dueDate?` · ${relativeDate(o.dueDate)}`:''}</span>
+      <span style={{fontSize:12,color:theme.brass,fontWeight:700,whiteSpace:'nowrap'}}>Åpne →</span>
+    </div>
+  );
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12}}>
+        <SectionHeading overline="Det som trenger deg nå" title="Innboks"/>
+        <Btn variant="ghost" icon={MessageSquare} onClick={onAsk}>Spør portalen</Btn>
+      </div>
+      <p style={{margin:'-8px 0 20px',fontSize:13.5,color:theme.inkSoft,lineHeight:1.6,maxWidth:720}}>
+        Forfalt, overleveringer til deg, beslutninger til oppfølging og det som forfaller snart — samlet fra alle portaler, forum, markedsplan og sortiment.
+      </p>
+
+      {empty && (
+        <Card style={{textAlign:'center',background:theme.sageLight,border:`1px solid ${theme.sage}`}}>
+          <div style={{fontFamily:'Fraunces, Georgia, serif',fontSize:18,fontWeight:600,color:theme.ink,marginBottom:4}}>✓ Innboksen er tom</div>
+          <div style={{fontSize:13,color:theme.inkSoft}}>Ingenting forfalt eller venter på deg akkurat nå.</div>
+        </Card>
+      )}
+
+      {unreadMessages > 0 && (
+        <div onClick={()=>onNavigate && onNavigate('messages')} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:theme.surface,border:`1px solid ${theme.border}`,borderLeft:`3px solid ${theme.brass}`,borderRadius:9,marginBottom:16,cursor:'pointer'}}>
+          <Pill bg={theme.surfaceAlt} color={theme.inkSoft}>Samtaler</Pill>
+          <span style={{flex:1,fontSize:13.5,color:theme.ink}}>Du har {unreadMessages} uleste {unreadMessages===1?'melding':'meldinger'}</span>
+          <span style={{fontSize:12,color:theme.brass,fontWeight:700}}>Åpne →</span>
+        </div>
+      )}
+
+      {groups.map(g => (
+        <div key={g.t} style={{marginBottom:22}}>
+          <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:8}}>
+            <span style={{width:9,height:9,borderRadius:3,background:g.tone}}/>
+            <h3 style={{margin:0,fontFamily:'Fraunces, Georgia, serif',fontSize:16,fontWeight:600,color:theme.ink}}>{g.label} <span style={{color:theme.inkMuted,fontWeight:400}}>· {g.rows.length}</span></h3>
+          </div>
+          {g.rows.map(o => <Row key={o.uid} o={o}/>)}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const FlytKontrollGlobal = ({ looseEnds, onNavigate }) => {
   const le = looseEnds || { ownerless:[], unresolved:[], overdue:[], decNoReview:[], propNoMeeting:[], total:0 };
   const danger = '#C2502B';
@@ -5350,7 +5407,47 @@ const buildPortalContext = (data, currentUserId) => {
   return ctx;
 };
 
-const askAssistant = async (messages, data, currentUserId) => {
+const buildCoherenceContext = (items = [], le = {}, allData = {}) => {
+  const open = items.filter(o => !o.done);
+  let c = '\n=== PÅ TVERS AV ALLE PORTALER (sammenhengsmotor) ===\n';
+
+  const byPortal = {};
+  open.forEach(o => {
+    const p = o.portalLabel || o.portal || '—';
+    byPortal[p] = byPortal[p] || {};
+    byPortal[p][o.kind] = (byPortal[p][o.kind] || 0) + 1;
+  });
+  c += 'Åpne poster per portal:\n';
+  Object.entries(byPortal).forEach(([p, kinds]) => {
+    c += `- ${p}: ${Object.entries(kinds).map(([k, n]) => `${n} ${k}`).join(', ')}\n`;
+  });
+
+  const sec = (label, arr) => {
+    if (!arr || !arr.length) return;
+    c += `${label} (${arr.length}):\n`;
+    arr.slice(0, 40).forEach(o => {
+      c += `  - [${o.portalLabel}] ${o.label}: "${o.title}"${o.ownerName ? ` (eier: ${o.ownerName})` : ''}${o.dueDate ? ` frist ${o.dueDate}` : ''}\n`;
+    });
+  };
+  c += `\nLØSE TRÅDER — kan henge eller ligge gjemt (totalt ${le.total || 0}):\n`;
+  sec('Uten eier', le.ownerless);
+  sec('Eier matcher ikke et medlem', le.unresolved);
+  sec('Forfalt', le.overdue);
+  sec('Beslutning uten review-dato', le.decNoReview);
+  sec('Innmeldt sak uten møte', le.propNoMeeting);
+
+  const byOwner = {};
+  open.forEach(o => { if (!o.ownerName) return; (byOwner[o.ownerName] = byOwner[o.ownerName] || []).push(o); });
+  c += `\nEIERSKAP (hvem eier hva, åpne poster):\n`;
+  Object.entries(byOwner).sort((a, b) => b[1].length - a[1].length).slice(0, 40).forEach(([name, arr]) => {
+    const kinds = {}; arr.forEach(o => { kinds[o.kind] = (kinds[o.kind] || 0) + 1; });
+    c += `- ${name}: ${arr.length} poster (${Object.entries(kinds).map(([k, n]) => `${n} ${k}`).join(', ')})\n`;
+  });
+
+  return c;
+};
+
+const askAssistant = async (messages, data, currentUserId, coherenceContext = '') => {
   const me = data.members.find(m=>m.id===currentUserId);
   const ctx = buildPortalContext(data, currentUserId);
   const today = new Date().toISOString().slice(0,10);
@@ -5362,11 +5459,14 @@ DAGENS DATO: ${today}
 
 PORTALDATA:
 ${ctx}
+${coherenceContext || ''}
 
 REGLER:
 - Svar alltid på norsk
 - Vær konkret: bruk navn, datoer, tall fra dataene
 - Når brukeren spør om "mine" eller "meg", filtrer på pålogget bruker
+- Du har innsikt PÅ TVERS av alle portaler via «sammenhengsmotoren». Bruk den til spørsmål som «hva henger i Salg?», «hvem eier X?», «hva er forfalt denne uka?», «hva mangler ansvarlig?». «Løse tråder» = ansvar som kan ligge gjemt (uten eier, eier som ikke matcher et medlem, forfalt, beslutning uten review, sak uten møte).
+- Detaljert portaldata over gjelder den aktive portalen; sammenhengsmotor-seksjonen dekker hele organisasjonen
 - Bruk markdown med ** for fete tekst og bullet-lister når det egner seg
 - Vær konsis – brukeren har lite tid, gå rett på sak
 - Hvis spørsmålet ikke kan besvares fra dataene, si det tydelig
@@ -5414,7 +5514,7 @@ const renderMarkdown = (text) => {
   return out.join('');
 };
 
-const AssistantPanel = ({ open, onClose, data, currentUserId, onNavigate }) => {
+const AssistantPanel = ({ open, onClose, data, currentUserId, onNavigate, coherenceContext='' }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -5428,7 +5528,7 @@ const AssistantPanel = ({ open, onClose, data, currentUserId, onNavigate }) => {
     setInput('');
     setLoading(true);
     try {
-      const reply = await askAssistant(newMessages, data, currentUserId);
+      const reply = await askAssistant(newMessages, data, currentUserId, coherenceContext);
       setMessages([...newMessages, { role: 'assistant', content: reply }]);
     } catch (e) {
       setMessages([...newMessages, { role: 'assistant', content: `Beklager, kunne ikke kontakte Claude API:\n\n**Feil:** ${e.message}\n\nI produksjonsoppsett vil dette være ruteet via et server-side API.` }]);
@@ -6127,6 +6227,11 @@ const App = ({ identity }) => {
     () => looseEnds(coherenceItems, globalMemberIds(allData, forumData)),
     [coherenceItems, allData, forumData]
   );
+  const inboxItems = useMemo(() => inbox(coherenceItems, currentUserId), [coherenceItems, currentUserId]);
+  const coherenceContextStr = useMemo(
+    () => buildCoherenceContext(coherenceItems, orgLooseEnds, allData),
+    [coherenceItems, orgLooseEnds, allData]
+  );
 
   // Ikke innlogget → vis portalvelger (kun demo-modus når Supabase er av)
   if (!loggedIn && !SUPABASE_ENABLED) {
@@ -6162,6 +6267,7 @@ const App = ({ identity }) => {
     unreadMessages: totalUnread(data, currentUserId),
     crossorg: programs.length,
     flyt: orgLooseEnds.total,
+    innboks: inboxItems.length,
   };
 
   return (
@@ -6186,6 +6292,7 @@ const App = ({ identity }) => {
         {view==='home'        && <HomeView          data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} allData={allData} crossorgData={crossorgData} availablePortals={availablePortals} activePortal={activePortal} onSwitchPortal={handleSwitchPortal} onAsk={()=>setAssistantOpen(true)} identity={identity} forumData={forumData} onOpenForum={handleOpenForum} unifiedTasks={unifiedMyWork}/>}
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} unifiedTasks={unifiedMyWork} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')} sortimentTasks={sortimentAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
         {view==='flyt'        && <FlytKontrollGlobal looseEnds={orgLooseEnds} onNavigate={handleNavigate}/>}
+        {view==='innboks'     && <InboxView items={inboxItems} unreadMessages={totalUnread(data, currentUserId)} onNavigate={handleNavigate} onAsk={()=>setAssistantOpen(true)}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='arshjul'    && <ArshjulView data={data} save={save} currentUserId={currentUserId} />}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
@@ -6257,7 +6364,7 @@ const App = ({ identity }) => {
         currentUserId={currentUserId}/>
 
       <AssistantPanel open={assistantOpen} onClose={()=>setAssistantOpen(false)}
-        data={data} currentUserId={currentUserId} onNavigate={handleNavigate}/>
+        data={data} currentUserId={currentUserId} onNavigate={handleNavigate} coherenceContext={coherenceContextStr}/>
 
       <Modal open={userPickerOpen} onClose={()=>setUserPickerOpen(false)} title={`Velg hvem du er pålogget som · ${data.org?.orgName || ''}`}>
         <div style={{display:'grid',gap:8}}>

@@ -163,7 +163,24 @@ export function myWork(items = [], currentUserId) {
     .sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
 }
 
-// B — alt som henger eller kan ligge gjemt, hele appen.
+// Personlig innboks — det som trenger din oppmerksomhet nå, prioritert.
+// Tier 0 forfalt · 1 overlevering/beslutning til deg · 2 forfaller snart.
+export function inbox(items = [], currentUserId, { soonDays = 3 } = {}) {
+  if (!currentUserId) return [];
+  const out = [];
+  items.forEach((o) => {
+    if (o.done || o.owner !== currentUserId) return;
+    const d = daysFrom(o.dueDate);
+    let tier, reason;
+    if (d !== null && d < 0) { tier = 0; reason = 'Forfalt'; }
+    else if (o.kind === 'overlevering') { tier = 1; reason = 'Overlevering til deg'; }
+    else if (o.kind === 'beslutning' && d !== null && d <= 14) { tier = 1; reason = 'Beslutning til oppfølging'; }
+    else if (d !== null && d >= 0 && d <= soonDays) { tier = 2; reason = 'Forfaller snart'; }
+    else return;
+    out.push({ ...o, tier, reason });
+  });
+  return out.sort((a, b) => a.tier - b.tier || (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
+}
 export function looseEnds(items = [], knownIds) {
   const ownerless = [], unresolved = [], overdue = [], decNoReview = [], propNoMeeting = [];
   items.forEach((o) => {
