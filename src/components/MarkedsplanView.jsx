@@ -1027,10 +1027,17 @@ function DimensionsModal({ dimensions, campaigns, activities, onClose, onSave })
 function nameResolves(name, members) {
   const n = String(name || "").trim().toLowerCase();
   if (!n) return false;
-  return (members || []).some((m) => {
+  const nWords = n.split(/\s+/);
+  let matchCount = 0;
+  for (const m of (members || [])) {
     const mn = String(m.name || "").trim().toLowerCase();
-    return mn === n || mn.split(" ")[0] === n.split(" ")[0];
-  });
+    if (mn === n) return true;
+    const mnWords = mn.split(/\s+/);
+    if (nWords.length < mnWords.length && nWords.every((w, i) => mnWords[i] === w)) {
+      matchCount++;
+    }
+  }
+  return matchCount === 1;
 }
 
 function computeLooseEnds({ activities = [], tasks = [], handoffs = [], campaigns = [], goals = [], members = [] }) {

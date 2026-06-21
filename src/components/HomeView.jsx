@@ -32,7 +32,7 @@ export default function HomeView({ data, currentUserId, onNavigate, save, allDat
 
   const now = new Date();
   const greeting = now.getHours() < 10 ? 'God morgen' : now.getHours() < 18 ? 'God dag' : 'God kveld';
-  const firstName = me.name.split(' ')[0];
+  const firstName = me.name;
 
   // KPI data
   const forumTasks = Object.values(forumData||{}).flatMap(fd=>(fd.tasks||[]).filter(t=>t.owner===me.id&&t.status!=='fullført'));
@@ -92,7 +92,7 @@ export default function HomeView({ data, currentUserId, onNavigate, save, allDat
           </div>
         </div>
         <div style={{width:72,height:72,borderRadius:'50%',background:theme.brass,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:26,fontWeight:700,flexShrink:0}}>
-          {me.initials || me.name.slice(0,2).toUpperCase()}
+          {me.initials || ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : me.name.slice(0,2).toUpperCase())(me.name.trim().split(/\s+/))}
         </div>
       </div>
 

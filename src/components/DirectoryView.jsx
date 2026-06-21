@@ -196,7 +196,7 @@ function PortalSection({ section, allPeople, onSelect }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700, flexShrink: 0,
               }}>
-                {m.initials || m.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                {m.initials || ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : m.name.slice(0,2).toUpperCase())(m.name.trim().split(/\s+/))}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -240,7 +240,7 @@ function PersonModal({ person, isAdmin, onClose, onSave }) {
   const handleSave = () => {
     if (!form.name.trim()) return;
     const updated = { id: person.id, name: form.name.trim(), role: form.role.trim(), email: form.email.trim(), phone: form.phone.trim(),
-      initials: form.name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() };
+      initials: ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : form.name.trim().slice(0,2).toUpperCase())(form.name.trim().split(/\s+/)) };
     (person.portals || []).forEach(pid => onSave && onSave(pid, updated));
     setEditing(false);
     onClose();
@@ -272,7 +272,7 @@ function PersonModal({ person, isAdmin, onClose, onSave }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 16, fontWeight: 700,
               }}>
-                {person.initials || person.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                {person.initials || ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : person.name.slice(0,2).toUpperCase())(person.name.trim().split(/\s+/))}
               </div>
               <div>
                 <div style={{ fontSize: 17, fontWeight: 700, color: C.ink }}>{person.name}</div>

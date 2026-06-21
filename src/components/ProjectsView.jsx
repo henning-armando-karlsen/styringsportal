@@ -113,7 +113,7 @@ const Avatar = ({ member, size = 36 }) => {
   const idx = (member?.id || '').split('').reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
   return (
     <div title={member?.name} style={{ width: size, height: size, borderRadius: '50%', background: colors[idx], display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: size * 0.38, fontWeight: 700, flexShrink: 0 }}>
-      {member?.initials || member?.name?.slice(0, 2).toUpperCase() || '?'}
+      {member?.initials || ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : (member?.name||'').slice(0,2).toUpperCase())((member?.name||'').trim().split(/\s+/))}
     </div>
   );
 };
@@ -1412,7 +1412,7 @@ function ProjectForm({ project, data, allData, activePortal, memberFromAny, onSa
             return (
               <button key={m.id} type="button" onClick={() => toggleMember(m.id, m._portalId)}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px 5px 5px', borderRadius: 999, border: `1px solid ${on ? theme.brass : theme.border}`, background: on ? theme.brassLight : theme.surface, color: theme.ink, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 500 }}>
-                <Avatar member={m} size={20} />{m.name.split(' ')[0]}
+                <Avatar member={m} size={20} />{m.name}
                 {p.scope === 'crossorg' && <span style={{ fontSize: 10, color: theme.inkMuted }}>({portalNames[m._portalId] || m._portalId})</span>}
               </button>
             );
@@ -1426,7 +1426,7 @@ function ProjectForm({ project, data, allData, activePortal, memberFromAny, onSa
               return (
                 <div key={pm.memberId} style={{ display: 'flex', gap: 8, alignItems: 'center', background: theme.surfaceAlt, padding: '8px 12px', borderRadius: 8 }}>
                   <Avatar member={m} size={24} />
-                  <span style={{ fontSize: 12, fontWeight: 600, color: theme.ink, minWidth: 78 }}>{m.name.split(' ')[0]}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: theme.ink, minWidth: 78 }}>{m.name}</span>
                   <input style={{ ...sm, flex: 1 }} value={pm.role || ''} onChange={e => updateMember(pm.memberId, { role: e.target.value })} placeholder="Rolle" />
                   <input style={{ ...sm, flex: 2 }} value={pm.responsibility || ''} onChange={e => updateMember(pm.memberId, { responsibility: e.target.value })} placeholder="Ansvarsområde" />
                 </div>
@@ -1448,7 +1448,7 @@ function ProjectForm({ project, data, allData, activePortal, memberFromAny, onSa
             <input style={{ ...sm, width: 130 }} type="date" value={ms.date || ''} onChange={e => updateMilestone(i, { date: e.target.value })} />
             <select style={{ ...sm, width: 116, cursor: 'pointer' }} value={ms.owner || ''} onChange={e => updateMilestone(i, { owner: e.target.value })}>
               <option value="">Ansvarlig…</option>
-              {uniqueMembers.map(m => <option key={m.id} value={m.id}>{m.name.split(' ')[0]}</option>)}
+              {uniqueMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
             <select style={{ ...sm, width: 110, cursor: 'pointer' }} value={ms.status} onChange={e => updateMilestone(i, { status: e.target.value })}>
               <option value="ikke_startet">Ikke startet</option>

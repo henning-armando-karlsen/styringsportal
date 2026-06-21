@@ -692,7 +692,7 @@ const Avatar = ({ member, size=36 }) => {
   return (
     <div style={{width:size,height:size,borderRadius:'50%',background:palette[idx],display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:size*0.38,fontWeight:600,letterSpacing:0.5,flexShrink:0}}
       title={`${member.name} – ${member.role}`}>
-      {member.initials || member.name?.slice(0,2).toUpperCase()}
+      {member.initials || ((p) => p.length > 1 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : (member.name||'').slice(0,2).toUpperCase())(( member.name||'').trim().split(/\s+/))}
     </div>
   );
 };
@@ -777,7 +777,7 @@ const PortalSwitcher = ({ availablePortals, activePortal, onSwitchPortal }) => {
 /* ===== SIDEBAR ===== */
 const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUser, onSearch, org={}, availablePortals=[], activePortal, onSwitchPortal, onLogout, showAdmin, identity, myForums=[], activeForum, onOpenForum, forumData={} }) => {
   const me = members.find(m => m.id === currentUserId);
-  const displayName = me ? me.name.split(' ').slice(0,2).join(' ') : (identity ? identity.name : null);
+  const displayName = me ? me.name : (identity ? identity.name : null);
   const displayRole = me ? me.role : (identity?.isAdmin ? 'Administrator' : null);
   const sections = [
     { label: null, items: [
@@ -852,7 +852,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
           </button>
         ) : displayName ? (
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px'}}>
-            {me ? <Avatar member={me} size={32}/> : <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(184,137,59,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#DCC49C',fontSize:12,fontWeight:700}}>{(displayName||'').split(' ').map(w=>w[0]).join('').slice(0,2)}</div>}
+            {me ? <Avatar member={me} size={32}/> : <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(184,137,59,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#DCC49C',fontSize:12,fontWeight:700}}>{((p)=>p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():(displayName||'').slice(0,2).toUpperCase())((displayName||'').trim().split(/\s+/))}</div>}
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:13,color:'#fff',fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{displayName}</div>
               {displayRole && <div style={{fontSize:11,color:'#A89978',marginTop:1}}>{displayRole}</div>}
@@ -1183,7 +1183,7 @@ const MeetingForm = ({ meeting, data, onSave, onCancel, onDelete }) => {
             return (
               <button key={mb.id} type="button" onClick={()=>toggleAttendee(mb.id)}
                 style={{display:'flex',alignItems:'center',gap:8,padding:'6px 12px 6px 6px',borderRadius:999,border:`1px solid ${on?theme.brass:theme.border}`,background:on?theme.brassLight:theme.surface,color:theme.ink,cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:500}}>
-                <Avatar member={mb} size={22}/>{mb.name.split(' ')[0]}
+                <Avatar member={mb} size={22}/>{mb.name}
               </button>
             );
           })}
@@ -1926,7 +1926,7 @@ const MeetingDetail = ({ meeting, data, save, onBack, onEdit, currentUserId }) =
                           : <Pill bg={theme.surfaceAlt} color={theme.inkMuted}>Ikke levert</Pill>}
                       </div>
                       <textarea value={p?.content||''} onChange={(e)=>updatePrep(id, e.target.value)}
-                        placeholder={`Forberedelse fra ${m.name.split(' ')[0]}...`} rows={3}
+                        placeholder={`Forberedelse fra ${m.name}...`} rows={3}
                         style={{width:'100%',padding:'10px 12px',border:`1px solid ${theme.borderSoft}`,borderRadius:8,fontSize:13,fontFamily:'inherit',background:theme.surface,color:theme.ink,resize:'vertical',outline:'none',boxSizing:'border-box',lineHeight:1.55}}/>
                       {p?.updatedAt && (
                         <div style={{fontSize:11,color:theme.inkMuted,marginTop:6}}>
@@ -2483,7 +2483,8 @@ const TeamView = ({ data, save }) => {
       <Modal open={!!editing} onClose={()=>setEditing(null)} title={editing?.id?'Rediger medlem':'Nytt medlem'}>
         {editing && <MemberForm member={editing}
           onSave={(m)=>{
-            const initials = (m.name||'').split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+            const parts = (m.name||'').trim().split(/\s+/).filter(Boolean);
+            const initials = parts.length > 1 ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase() : (m.name||'').slice(0,2).toUpperCase();
             const final = {...m, initials};
             if (m.id) save({...data, members:data.members.map(x=>x.id===m.id?final:x)});
             else save({...data, members:[...data.members, {...final, id:uid('m')}]});
@@ -3998,7 +3999,7 @@ const MessageBubble = ({ message, data, currentUserId, onReact, onReply, onDelet
         {replyTarget && (
           <div style={{fontSize:11,color:theme.inkMuted,marginBottom:4,display:'inline-flex',alignItems:'center',gap:4,paddingLeft:8,borderLeft:`2px solid ${theme.border}`}}>
             <Reply size={10}/>
-            <span>Svar til <strong>{data.members.find(m=>m.id===replyTarget.author)?.name?.split(' ')[0]||'?'}</strong>: </span>
+            <span>Svar til <strong>{data.members.find(m=>m.id===replyTarget.author)?.name||'?'}</strong>: </span>
             <span style={{fontStyle:'italic',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:300}}>{replyTarget.content.slice(0,80)}{replyTarget.content.length>80?'…':''}</span>
           </div>
         )}
@@ -4027,7 +4028,7 @@ const MessageBubble = ({ message, data, currentUserId, onReact, onReply, onDelet
           <div style={{display:'flex',gap:5,marginTop:6,flexWrap:'wrap'}}>
             {Object.entries(reactionGroups).map(([emoji, ids]) => {
               const meReacted = currentUserId && ids.includes(currentUserId);
-              const names = ids.map(id => data.members.find(m=>m.id===id)?.name?.split(' ')[0]||'?').join(', ');
+              const names = ids.map(id => data.members.find(m=>m.id===id)?.name||'?').join(', ');
               return (
                 <button key={emoji} onClick={()=>toggleReaction(emoji)}
                   title={`${names} reagerte med ${emoji}`}
@@ -4336,7 +4337,7 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:6}}>
                         <span style={{fontSize:13,fontWeight: (unread > 0 || on) ? 600 : 500, color: on ? theme.brassDark : theme.ink, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
-                          {member.name.split(' ').slice(0,2).join(' ')}
+                          {member.name}
                         </span>
                         {lastMessage && (
                           <span style={{fontSize:10,color:theme.inkMuted,flexShrink:0}}>
@@ -4409,7 +4410,7 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
               {dmPartner && (
                 <div style={{padding:'10px 22px',background:'#F8F4EA',borderBottom:`1px solid ${theme.borderSoft}`,display:'flex',gap:8,alignItems:'center',fontSize:12,color:theme.inkSoft,lineHeight:1.5}}>
                   <ShieldAlert size={12} style={{color:theme.brass,flexShrink:0}}/>
-                  <span>Privat samtale mellom deg og {dmPartner.name.split(' ')[0]}. Andre i {data.org?.groupNoun || 'ledergruppen'} ser ikke denne tråden.</span>
+                  <span>Privat samtale mellom deg og {dmPartner.name}. Andre i {data.org?.groupNoun || 'ledergruppen'} ser ikke denne tråden.</span>
                 </div>
               )}
 
@@ -4419,7 +4420,7 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
                     {channel ? <MessageCircle size={32} style={{color:theme.brass,opacity:0.4,marginBottom:10}}/> 
                              : <Avatar member={dmPartner} size={48} style={{marginBottom:10,opacity:0.6}}/>}
                     <div style={{fontSize:14,fontWeight:600,color:theme.inkSoft,marginBottom:4,marginTop:10}}>
-                      {channel ? 'Ingen meldinger ennå' : `Start samtalen med ${dmPartner.name.split(' ')[0]}`}
+                      {channel ? 'Ingen meldinger ennå' : `Start samtalen med ${dmPartner.name}`}
                     </div>
                     <div style={{fontSize:12.5}}>
                       {channel
@@ -4447,7 +4448,7 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
                   <div style={{display:'flex',alignItems:'center',gap:10,padding:'6px 12px',marginBottom:8,background:theme.surfaceAlt,borderRadius:6,borderLeft:`3px solid ${theme.brass}`}}>
                     <Reply size={13} style={{color:theme.brass,flexShrink:0}}/>
                     <div style={{flex:1,minWidth:0,fontSize:12,color:theme.inkSoft}}>
-                      Svarer <strong>{memberById(replyTo.author)?.name?.split(' ')[0]||'?'}</strong>: 
+                      Svarer <strong>{memberById(replyTo.author)?.name||'?'}</strong>:
                       <span style={{fontStyle:'italic',marginLeft:4}}>{replyTo.content.slice(0,80)}{replyTo.content.length>80?'…':''}</span>
                     </div>
                     <button onClick={()=>setReplyTo(null)} style={{background:'transparent',border:'none',cursor:'pointer',color:theme.inkMuted,padding:2,display:'flex'}}>
@@ -4479,7 +4480,7 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
                     placeholder={
                       !currentUserId ? 'Logg inn for å skrive'
                       : channel ? `Skriv i ${channel.name}… (@navn for å nevne, Shift+Enter for ny linje)`
-                      : `Melding til ${dmPartner.name.split(' ')[0]}… (Shift+Enter for ny linje)`
+                      : `Melding til ${dmPartner.name}… (Shift+Enter for ny linje)`
                     }
                     disabled={!currentUserId}
                     rows={1}
@@ -4788,7 +4789,7 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
 
   const now = new Date();
   const greeting = now.getHours() < 10 ? 'God morgen' : now.getHours() < 18 ? 'God dag' : 'God kveld';
-  const firstName = me.name.split(' ')[0];
+  const firstName = me.name;
 
   // Find next meeting + my prep status
   const nextMeeting = myMeetings[0];
@@ -4966,7 +4967,7 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
                   {h.title}{isMine && <span style={{fontSize:9.5,fontWeight:700,letterSpacing:0.3,textTransform:'uppercase',color:theme.brassDark,background:theme.brassLight,padding:'1px 6px',borderRadius:999,marginLeft:7}}>deg</span>}
                 </div>
                 <div style={{fontSize:11.5,color:theme.inkMuted,marginTop:2}}>
-                  {dir==='out' ? `Til ${portalShort(h.to)}` : `Fra ${portalShort(h.from)}`} · {other?other.name.split(' ')[0]:'?'} · {prog?prog.name:''} · {h.status==='levert'?'Levert':relativeDate(isoFromOffset(h.dueOffset))}
+                  {dir==='out' ? `Til ${portalShort(h.to)}` : `Fra ${portalShort(h.from)}`} · {other?other.name:'?'} · {prog?prog.name:''} · {h.status==='levert'?'Levert':relativeDate(isoFromOffset(h.dueOffset))}
                 </div>
               </div>
               <Pill bg={meta.bg} color={meta.fg} style={{flexShrink:0,display:'inline-flex',alignItems:'center',gap:4}}>{meta.overdue && <AlertCircle size={11}/>}{meta.label}</Pill>
@@ -5155,7 +5156,7 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
                       <AtSign size={14} style={{color:theme.brass,flexShrink:0,marginTop:3}}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:12,color:theme.brass,fontWeight:600,marginBottom:2}}>
-                          {author?.name?.split(' ')[0]||'?'} nevnte deg i #{channel?.name||'?'} · {fmtRelativeTime(msg.timestamp)}
+                          {author?.name||'?'} nevnte deg i #{channel?.name||'?'} · {fmtRelativeTime(msg.timestamp)}
                         </div>
                         <div style={{fontSize:13,color:theme.ink,lineHeight:1.45,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                           {msg.content.slice(0,120)}{msg.content.length>120?'…':''}
@@ -5174,7 +5175,7 @@ const PersonalDeskView = ({ data, currentUserId, onNavigate, save, onAsk, allDat
                       <Avatar member={ub.member} size={30}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13.5,fontWeight:600,color:theme.ink,display:'flex',justifyContent:'space-between',gap:8,alignItems:'baseline'}}>
-                          <span style={{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{ub.member.name.split(' ').slice(0,2).join(' ')}</span>
+                          <span style={{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{ub.member.name}</span>
                           {lastDmMsg && <span style={{fontSize:10,color:theme.inkMuted,fontWeight:500}}>{fmtRelativeTime(lastDmMsg.timestamp)}</span>}
                         </div>
                         <div style={{fontSize:11.5,color:theme.inkMuted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:1}}>
@@ -5315,7 +5316,7 @@ const CommandPalette = ({ open, onClose, data, onNavigate, onAsk, currentUserId 
           const otherMember = memberById(otherId);
           out.push({ key: 'msg-'+msg.id, type: 'DM',
             title: msg.content.slice(0,80) + (msg.content.length>80?'…':''),
-            sub: `${author?.name?.split(' ')[0]||'?'} ↔ ${otherMember?.name?.split(' ')[0]||'?'} · ${fmtRelativeTime(msg.timestamp)}`,
+            sub: `${author?.name||'?'} ↔ ${otherMember?.name||'?'} · ${fmtRelativeTime(msg.timestamp)}`,
             icon: MessageCircle, view: 'messages',
             focusId: 'dm:' + (msg.author === currentUserId ? otherId : msg.author),
             color: theme.brassDark });
@@ -5323,7 +5324,7 @@ const CommandPalette = ({ open, onClose, data, onNavigate, onAsk, currentUserId 
           const channel = (data.channels||[]).find(c => c.id === msg.channelId);
           out.push({ key: 'msg-'+msg.id, type: 'Melding',
             title: msg.content.slice(0,80) + (msg.content.length>80?'…':''),
-            sub: `${author?.name?.split(' ')[0]||'?'} i ${channel?.name||'?'} · ${fmtRelativeTime(msg.timestamp)}`,
+            sub: `${author?.name||'?'} i ${channel?.name||'?'} · ${fmtRelativeTime(msg.timestamp)}`,
             icon: MessageCircle, view: 'messages', focusId: msg.channelId, color: theme.sage });
         }
       }
@@ -5506,7 +5507,7 @@ const buildPortalContext = (data, currentUserId) => {
       const author = memberById(msg.author);
       const channel = (data.channels||[]).find(c=>c.id===msg.channelId);
       const replyTarget = msg.replyTo ? (data.messages||[]).find(m=>m.id===msg.replyTo) : null;
-      const replyInfo = replyTarget ? ` [svar til ${memberById(replyTarget.author)?.name?.split(' ')[0]||'?'}: "${replyTarget.content.slice(0,40)}..."]` : '';
+      const replyInfo = replyTarget ? ` [svar til ${memberById(replyTarget.author)?.name||'?'}: "${replyTarget.content.slice(0,40)}..."]` : '';
       const reactions = (msg.reactions||[]).length > 0
         ? ` (reaksjoner: ${(msg.reactions||[]).map(r=>r.emoji).join('')})` : '';
       ctx += `- [#${channel?.name||'?'}] ${author?.name||'?'} ${fmtRelativeTime(msg.timestamp)}${replyInfo}: ${msg.content}${reactions}\n`;
@@ -5526,8 +5527,8 @@ const buildPortalContext = (data, currentUserId) => {
         const otherId = msg.dmKey.split('_').find(id => id !== msg.author);
         const other = memberById(otherId);
         const direction = msg.author === currentUserId
-          ? `Du → ${other?.name?.split(' ')[0]||'?'}`
-          : `${author?.name?.split(' ')[0]||'?'} → Deg`;
+          ? `Du → ${other?.name||'?'}`
+          : `${author?.name||'?'} → Deg`;
         ctx += `- [DM] ${direction} ${fmtRelativeTime(msg.timestamp)}: ${msg.content}\n`;
       });
       ctx += `\n`;
@@ -5683,7 +5684,7 @@ const AssistantPanel = ({ open, onClose, data, currentUserId, onNavigate, cohere
     `Hva er status på mine åpne oppgaver?`,
     `Hvilke saker er meldt inn til neste ${meetingNoun}?`,
     `Oppsummer hva som diskuteres i samtalene nå`,
-    `Hva har jeg snakket med ${data.members.find(m=>m.id!==me.id)?.name?.split(' ')[0]||'noen'} om i det siste?`,
+    `Hva har jeg snakket med ${data.members.find(m=>m.id!==me.id)?.name||'noen'} om i det siste?`,
     `Hvilke beslutninger venter på meg?`,
     `Vis meg ${initNoun}er i risikosone`,
   ] : [
@@ -5725,7 +5726,7 @@ const AssistantPanel = ({ open, onClose, data, currentUserId, onNavigate, cohere
             <div>
               <div style={{padding:18,background:theme.brassLight,border:`1px solid ${theme.brass}33`,borderRadius:10,marginBottom:18}}>
                 <div style={{fontSize:13,color:theme.ink,lineHeight:1.6}}>
-                  Jeg har full innsikt i portalen din – møter, beslutninger, oppgaver, initiativer, KPI-er, risikoer og planer. {me ? `Jeg vet at du er pålogget som ${me.name.split(' ')[0]}, så «mine» refererer til deg.` : 'Logg inn som et medlem for personlige svar.'}
+                  Jeg har full innsikt i portalen din – møter, beslutninger, oppgaver, initiativer, KPI-er, risikoer og planer. {me ? `Jeg vet at du er pålogget som ${me.name}, så «mine» refererer til deg.` : 'Logg inn som et medlem for personlige svar.'}
                 </div>
               </div>
               <div style={{fontSize:11,fontWeight:700,color:theme.inkSoft,letterSpacing:0.6,textTransform:'uppercase',marginBottom:10}}>Forslag</div>
@@ -6001,7 +6002,7 @@ const CrossOrgView = ({ allData, currentUserId, activePortal, onCrossNavigate })
                             <div style={{flex:1,minWidth:0}}>
                               <div style={{fontSize:13,fontWeight:600,color:theme.ink,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{h.title}</div>
                               <div style={{fontSize:11.5,color:theme.inkMuted,marginTop:2}}>
-                                {o?o.name.split(' ')[0]:'?'} → {r?r.name.split(' ')[0]:'?'} · {h.status==='levert'?'Levert':relativeDate(isoFromOffset(h.dueOffset))}
+                                {o?o.name:'?'} → {r?r.name:'?'} · {h.status==='levert'?'Levert':relativeDate(isoFromOffset(h.dueOffset))}
                               </div>
                             </div>
                             <Pill bg={meta.bg} color={meta.fg} style={{flexShrink:0,display:'inline-flex',alignItems:'center',gap:4}}>{meta.overdue && <AlertCircle size={11}/>}{meta.label}</Pill>
@@ -6233,14 +6234,22 @@ const App = ({ identity }) => {
     if (!name) return null;
     const n = String(name).trim().toLowerCase();
     if (!n) return null;
+    const nWords = n.split(/\s+/);
+    let prefixMatch = null;
+    let prefixAmbiguous = false;
     for (const pid of Object.keys(allData)) {
-      const m = (allData[pid].members || []).find(mm =>
-        (mm.name || '').trim().toLowerCase() === n ||
-        (mm.initials || '').trim().toLowerCase() === n ||
-        (mm.name || '').trim().toLowerCase().split(' ')[0] === n
-      );
-      if (m) return m.id;
+      for (const mm of (allData[pid].members || [])) {
+        const full = (mm.name || '').trim().toLowerCase();
+        if (full === n) return mm.id;
+        if ((mm.initials || '').trim().toLowerCase() === n) return mm.id;
+        const fullWords = full.split(/\s+/);
+        if (nWords.length < fullWords.length && nWords.every((w, i) => fullWords[i] === w)) {
+          if (prefixMatch && prefixMatch !== mm.id) prefixAmbiguous = true;
+          else prefixMatch = mm.id;
+        }
+      }
     }
+    if (prefixMatch && !prefixAmbiguous) return prefixMatch;
     return null;
   };
   const markedsplanAssignments = useMemo(() => {
