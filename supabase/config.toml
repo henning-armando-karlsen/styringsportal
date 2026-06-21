@@ -1,0 +1,19 @@
+# Supabase-konfigurasjon for edge-funksjonene.
+#
+# Formål: gjøre JWT-innstillingen for hver funksjon VARIG (versjonert i koden),
+# slik at den ikke nullstilles til standard ved fremtidige re-deploys.
+
+[functions.ingest-sortiment]
+# Kalles på tvers av prosjekter fra Sortiment-appen, autentisert med en delt
+# hemmelighet i headeren (x-ingest-secret) — ikke med en portal-JWT.
+# Derfor MÅ JWT-verifisering være AV, ellers blokkerer gatewayen synken.
+verify_jwt = false
+
+[functions.assistant]
+# Kalles fra appen av en innlogget bruker. Krever gyldig JWT.
+verify_jwt = true
+
+[functions.admin-users]
+# Kalles av en innlogget administrator. Krever gyldig JWT
+# (funksjonen sjekker i tillegg is_admin() internt før service-role brukes).
+verify_jwt = true
