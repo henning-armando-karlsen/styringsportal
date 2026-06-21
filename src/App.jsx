@@ -776,6 +776,7 @@ const Sidebar = ({ active, onChange, counts, currentUserId, members, onSwitchUse
       { key:'documents',   label:'Dokumenter',   icon:Folder,     count:counts.documents },
       { key:'team',        label:org.navTeam || 'Ledergruppen', icon:Users, count:counts.team },
       { key:'directory',   label:'Avdelinger & medarbeidere', icon:UserCheck },
+      { key:'integrasjoner', label:'Integrasjoner', icon:Mail },
       ...(activePortal === 'leadership' ? [{ key:'orgchart', label:'Organisasjonskart', icon:Network }] : []),
     ]},
     ...(showAdmin ? [{ label: 'System', items: [
@@ -4461,6 +4462,91 @@ const MessagesView = ({ data, save, currentUserId, focusChannelId, onClearFocus 
 };
 
 /* ===== MITT SKRIVEBORD ===== */
+const IntegrationsView = ({ userName }) => {
+  const muted = theme.inkMuted;
+  const Provider = ({ name, sub, accent }) => (
+    <Card style={{padding:18}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+        <div style={{width:40,height:40,borderRadius:10,background:accent,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontFamily:'Fraunces, Georgia, serif',fontWeight:600,fontSize:18,flexShrink:0}}>{name[0]}</div>
+        <div>
+          <div style={{fontSize:15,fontWeight:600,color:theme.ink}}>{name}</div>
+          <div style={{fontSize:12.5,color:muted}}>{sub}</div>
+        </div>
+        <Pill bg={theme.amberLight} color="#8B6914" style={{marginLeft:'auto'}}>Ikke aktivert</Pill>
+      </div>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:14}}>
+        {['Kalender (lese/skrive)','E-post (lese/sende)'].map(s=>(
+          <span key={s} style={{fontSize:11.5,color:theme.inkSoft,background:theme.surfaceAlt,border:`1px solid ${theme.border}`,borderRadius:999,padding:'3px 9px'}}>{s}</span>
+        ))}
+      </div>
+      <button disabled style={{width:'100%',padding:'9px 12px',borderRadius:9,border:`1px solid ${theme.border}`,background:theme.surfaceAlt,color:muted,fontSize:13.5,fontWeight:600,fontFamily:'inherit',cursor:'not-allowed'}}>
+        Koble til · venter på IKT-oppsett
+      </button>
+    </Card>
+  );
+  const Use = ({ title, items }) => (
+    <Card style={{padding:18}}>
+      <h3 style={{margin:'0 0 10px',fontFamily:'Fraunces, Georgia, serif',fontSize:16,fontWeight:600,color:theme.ink}}>{title}</h3>
+      <ul style={{margin:0,paddingLeft:18,display:'grid',gap:6}}>
+        {items.map(i=><li key={i} style={{fontSize:13,color:theme.inkSoft,lineHeight:1.5}}>{i}</li>)}
+      </ul>
+    </Card>
+  );
+  return (
+    <div>
+      <SectionHeading overline="Tilkoblinger" title="Integrasjoner"/>
+
+      <Card style={{marginBottom:22,background:theme.amberLight,border:`1px solid ${theme.amber}`}}>
+        <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+          <AlertCircle size={20} style={{color:'#8B6914',flexShrink:0,marginTop:2}}/>
+          <div>
+            <div style={{fontWeight:600,color:theme.ink,marginBottom:4}}>Forberedt – ikke aktivert ennå</div>
+            <div style={{fontSize:13,color:theme.inkSoft,lineHeight:1.6}}>
+              Kalender- og e-postintegrasjon er lagt opp i portalen, men kobles ikke på før IKT har registrert en app i Vikingbads tenant (Microsoft 365 eller Google Workspace) og gitt nødvendige tillatelser. Når oppsettet er på plass, aktiveres knappene under, og hver bruker kobler sin egen konto.
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div style={{fontSize:11.5,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:muted,marginBottom:10}}>Leverandør</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:14,marginBottom:26}}>
+        <Provider name="Microsoft 365" sub="Outlook · Exchange · Microsoft Graph" accent="#2B5797"/>
+        <Provider name="Google Workspace" sub="Gmail · Google Calendar" accent="#3E7C4F"/>
+      </div>
+
+      <div style={{fontSize:11.5,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:muted,marginBottom:10}}>Hva det vil gi</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:14,marginBottom:26}}>
+        <Use title="Kalender (toveis)" items={[
+          'Møter og frister fra portalen havner i din egen kalender',
+          'Ledig tid vises når du planlegger et møte',
+          'Portalmøter opprettes som ekte kalenderhendelser med innkalling',
+        ]}/>
+        <Use title="E-post" items={[
+          'Daglig/ukentlig digest fra innboksen – forfalt, overleveringer, løse tråder',
+          'Purring til eier av poster som henger',
+          'Send referat og beslutninger direkte fra et møte',
+        ]}/>
+      </div>
+
+      <div style={{fontSize:11.5,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:muted,marginBottom:10}}>Min tilkobling</div>
+      <Card style={{padding:18,display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
+        <div style={{flex:1,minWidth:200}}>
+          <div style={{fontSize:14,fontWeight:600,color:theme.ink}}>{userName || 'Du'}</div>
+          <div style={{fontSize:12.5,color:muted}}>Ingen konto tilkoblet</div>
+        </div>
+        <Pill bg={theme.surfaceAlt} color={muted}>Ikke tilkoblet</Pill>
+        <button disabled style={{padding:'8px 14px',borderRadius:9,border:`1px solid ${theme.border}`,background:theme.surfaceAlt,color:muted,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'not-allowed'}}>
+          Koble til min konto
+        </button>
+      </Card>
+
+      <p style={{margin:'18px 0 0',fontSize:12,color:muted,lineHeight:1.6,maxWidth:720}}>
+        Tilgangen vil være delegert per bruker (du kobler din egen konto, ikke hele organisasjonen), med minst mulig tillatelser, og kan trekkes tilbake når som helst. Ingen data hentes før en konto er koblet til.
+      </p>
+    </div>
+  );
+};
+
 const InboxView = ({ items=[], unreadMessages=0, onNavigate, onAsk }) => {
   const danger = '#C2502B', warn = '#8B6914';
   const tierMeta = {
@@ -6293,6 +6379,7 @@ const App = ({ identity }) => {
         {view==='desk'        && <PersonalDeskView  data={data} currentUserId={currentUserId} onNavigate={handleNavigate} save={save} onAsk={()=>setAssistantOpen(true)} allData={allData} crossorgData={crossorgData} forumData={forumData} activePortal={activePortal} onOpenForum={handleOpenForum} unifiedTasks={unifiedMyWork} markedsplanTasks={markedsplanAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')} sortimentTasks={sortimentAssignments.filter(a => a.owner === currentUserId && a.status !== 'fullført')}/>}
         {view==='flyt'        && <FlytKontrollGlobal looseEnds={orgLooseEnds} onNavigate={handleNavigate}/>}
         {view==='innboks'     && <InboxView items={inboxItems} unreadMessages={totalUnread(data, currentUserId)} onNavigate={handleNavigate} onAsk={()=>setAssistantOpen(true)}/>}
+        {view==='integrasjoner' && <IntegrationsView userName={(data.members.find(m=>m.id===currentUserId)||{}).name}/>}
         {view==='crossorg'    && <CrossOrgView       allData={allData} currentUserId={currentUserId} activePortal={activePortal} onCrossNavigate={handleCrossNavigate} crossorgData={crossorgData} onNavigate={handleNavigate}/>}
         {view==='arshjul'    && <ArshjulView data={data} save={save} currentUserId={currentUserId} />}
         {view==='plans'       && <PlansView         data={data} save={save} currentUserId={currentUserId} onNavigate={handleNavigate}/>}
