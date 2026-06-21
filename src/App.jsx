@@ -6307,7 +6307,9 @@ const App = ({ identity }) => {
     return { ok: true, mode: 'live', count: (items || []).length };
   };
 
-  const availablePortals = identity ? identity.portals : (currentUserId ? (portalAccess[currentUserId] || []) : []);
+  const availablePortals = identity
+    ? (isAdminUser ? Array.from(new Set([...(identity.portals || []), ...Object.keys(allData)])) : identity.portals)
+    : (currentUserId ? (portalAccess[currentUserId] || []) : []);
 
   const resetTransient = () => { setSearchOpen(false); setAssistantOpen(false); setUserPickerOpen(false); setFocusMeetingId(null); setFocusChannelId(null); };
 
